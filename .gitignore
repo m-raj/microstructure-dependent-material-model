@@ -1,0 +1,6 @@
+*.pkl
+data/
+*.pth
+wandb/
+run*/
+__pycache__/

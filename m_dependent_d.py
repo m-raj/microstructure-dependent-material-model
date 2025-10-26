@@ -12,8 +12,8 @@ class EnergyFunctionM(nn.Module):
         self.E_encoder = E_encoder
         self.nu_encoder = nu_encoder
 
-        mu_dim = E_encoder.fc2.out_features + nu_encoder.fc2.out_features
-        self.picnn = PartiallyInputConvex(2, mu_dim, hidden_dim, hidden_dim)
+        mu_dim = 21
+        self.picnn = PartiallyInputConvex(1, mu_dim, hidden_dim, hidden_dim)
 
         self.activation = ReluSquare()
 
@@ -23,8 +23,8 @@ class EnergyFunctionM(nn.Module):
 
     def forward(self, u, v, E, nu):
         m_features = self.microstructure_encoder(E, nu)
-        convex_features = torch.cat((u, v), dim=-1)
-        energy = self.picnn(convex_features, m_features)
+        non_convex_features = torch.cat((v, m_features), dim=-1)
+        energy = self.picnn(u, non_convex_features)
         return energy.squeeze(-1)
 
     def compute_derivative(self, u, v, E, nu):
@@ -44,7 +44,7 @@ class InverseDissipationPotentialM(nn.Module):
         self.E_encoder = E_encoder
         self.nu_encoder = nu_encoder
 
-        mu_dim = E_encoder.fc2.out_features + nu_encoder.fc2.out_features + 1
+        mu_dim = 20 + 1
 
         self.picnn = PartiallyInputConvex(1, mu_dim, hidden_dim, hidden_dim)
 

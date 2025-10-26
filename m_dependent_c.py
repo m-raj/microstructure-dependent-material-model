@@ -44,7 +44,7 @@ class InverseDissipationPotentialM(nn.Module):
         self.E_encoder = E_encoder
         self.nu_encoder = nu_encoder
 
-        mu_dim = E_encoder.fc2.out_features + nu_encoder.fc2.out_features + 1
+        mu_dim = 20 + 1
 
         self.picnn = PartiallyInputConvex(1, mu_dim, hidden_dim, hidden_dim)
 
