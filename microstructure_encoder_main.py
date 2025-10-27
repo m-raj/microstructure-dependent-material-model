@@ -82,6 +82,7 @@ ae_nu_loss_history = []
 for epoch in tqdm(range(num_epochs)):
     loss = train_step(ae_nu, ae_nu_optimizer, nu)
     ae_nu_loss_history.append(loss)
+    run.log({"AE_nu_Loss": loss, "epoch": epoch})
     if (epoch + 1) % 100 == 0:
         print(f"AE Nu Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}")
 
