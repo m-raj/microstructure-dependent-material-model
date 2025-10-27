@@ -11,6 +11,9 @@ parser.add_argument(
     help="Path to the dataset",
 )
 parser.add_argument(
+    "--device", type=str, default="cpu", help="Device to use for training (cpu or cuda)"
+)
+parser.add_argument(
     "--epochs", type=int, default=1000, help="Number of training epochs"
 )
 parser.add_argument(
@@ -56,7 +59,7 @@ mm = importlib.import_module(args.material_model)
 from util import LossFunction
 from m_encoder import *
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device(args.device if torch.cuda.is_available() else "cpu")
 
 run = wandb.init(
     # Set the wandb entity where your project will be logged (generally your team name).
