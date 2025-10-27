@@ -1,0 +1,120 @@
+import torch, argparse, wandb, pickle, os
+from tqdm.notebook import tqdm
+
+from util import LossFunction
+from m_dependent_b import *
+from m_encoder import *
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--data_path",
+    type=str,
+    default="data/2024-10-13_PC1D_process10_data.pkl",
+    help="Path to the dataset",
+)
+parser.add_argument(
+    "--epochs", type=int, default=1000, help="Number of training epochs"
+)
+parser.add_argument(
+    "--lr", type=float, default=1e-3, help="Learning rate for the optimizer"
+)
+parser.add_argument(
+    "--hidden_dim", type=int, default=10, help="Hidden dimension for the autoencoder"
+)
+
+parser.add_argument(
+    "--encoder_hidden_dim",
+    type=int,
+    default=10,
+    help="Hidden dimension for the autoencoder",
+)
+
+parser.add_argument(
+    "--encoder_latent_dim",
+    type=int,
+    default=10,
+    help="Latent dimension for the autoencoder",
+)
+
+parser.add_argument(
+    "--step", type=int, default=50, help="Step size for downsampling the data"
+)
+parser.add_argument(
+    "--n_samples", type=int, default=10, help="Number of samples to use for training"
+)
+parser.add_argument(
+    "--encoder_path",
+    type=str,
+    default="run_1",
+    help="Path to the encoder model",
+)
+
+args = parser.parse_args()
+
+run = wandb.init(
+    # Set the wandb entity where your project will be logged (generally your team name).
+    entity="sci-ai",
+    # Set the wandb project where this run will be logged.
+    project="microstructure-dependent-potential-learning",
+    # Track hyperparameters and run metadata.
+    config=args.__dict__,
+    # Name of the run
+    name=args.run_id,
+)
+
+
+with open("data/2024-10-13_PC1D_process10_data.pkl", "rb") as f:
+    data = pickle.load(f)
+
+
+N = args.n_samples
+step = args.step
+
+e = torch.tensor(data["strain"][:N, ::step], dtype=torch.float32)
+e_dot = torch.tensor(data["strain_rate"][:N, ::step], dtype=torch.float32)
+s = torch.tensor(data["stress"][:N, ::step], dtype=torch.float32)
+E = torch.tensor(data["E"][:N], dtype=torch.float32)
+nu = torch.tensor(data["nu"][:N], dtype=torch.float32)
+
+loss_function = LossFunction()
+
+ae_E = AutoEncoder(E.shape[1], args.encoder_hidden_dim, args.encoder_latent_dim)
+ae_nu = AutoEncoder(nu.shape[1], args.encoder_hidden_dim, args.encoder_latent_dim)
+
+ae_E.load_state_dict(torch.load(f"{args.encoder_path}/ae_E.pth", weights_only=True))
+ae_nu.load_state_dict(torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=True))
+
+energy_input_dim = args.encoder_latent_dim * 2 + 2
+energy_hidden_dim = args.hidden_dim
+dissipation_input_dim = args.encoder_latent_dim * 2 + 2
+dissipation_hidden_dim = args.hidden_dim
+
+vmm = ViscoelasticMaterialModelM(
+    energy_input_dim,
+    energy_hidden_dim,
+    dissipation_input_dim,
+    dissipation_hidden_dim,
+    ae_E.encoder,
+    ae_nu.encoder,
+)
+optimizer_m = torch.optim.Adam(vmm.parameters(), lr=args.lr)
+loss_history_m = []
+
+epochs = args.epochs
+for epoch in tqdm(range(epochs)):
+    loss = train_step_M(vmm, optimizer_m, e, e_dot, E, nu, s)
+    loss_history_m.append(loss)
+    wandb.log({"loss": loss, "epoch": epoch})
+    if (epoch + 1) % 100 == 0:
+        print(f"Epoch [{epoch+1}/{epochs}], Loss: {loss:.4f}")
+
+save_path = "material_model_run_{0}".format(args.run_id)
+
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
+
+torch.save(vmm.state_dict(), "{0}/vmm_m.pth".format(save_path))
+
+os.system("cp main.py {0}/".format(save_path))
+os.system("cp m_dependent_b.py {0}/".format(save_path))
+os.system("cp m_encoder.py {0}/".format(save_path))

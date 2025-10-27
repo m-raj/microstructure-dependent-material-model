@@ -56,48 +56,45 @@ with open(args.data_path, "rb") as f:
 
 N = args.n_samples
 step = args.step
-e = torch.tensor(data["strain"][:N, ::step], dtype=torch.float32)
-e_dot = torch.tensor(data["strain_rate"][:N, ::step], dtype=torch.float32)
-s = torch.tensor(data["stress"][:N, ::step], dtype=torch.float32)
-
 E = torch.tensor(data["E"][:N], dtype=torch.float32)
 nu = torch.tensor(data["nu"][:N], dtype=torch.float32)
 
 loss_function = LossFunction()
 
-ae_E = AutoEncoder(E.shape[1], args.latent_dim)
+ae_E = AutoEncoder(E.shape[1], args.hidden_dim, args.latent_dim)
 ae_E_optimizer = torch.optim.Adam(ae_E.parameters(), lr=args.lr)
 ae_E_loss_history = []
 
 num_epochs = args.epochs
 for epoch in tqdm(range(num_epochs)):
-    loss = train_step_ae(ae_E, ae_E_optimizer, E)
+    loss = train_step(ae_E, ae_E_optimizer, E)
     ae_E_loss_history.append(loss)
     run.log({"AE_E_Loss": loss, "epoch": epoch})
     if (epoch + 1) % 100 == 0:
         tqdm.write(f"AE E Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}")
 
-ae_nu = AutoEncoder(nu.shape[1], args.latent_dim)
+ae_nu = AutoEncoder(nu.shape[1], args.hidden_dim, args.latent_dim)
 ae_nu_optimizer = torch.optim.Adam(ae_nu.parameters(), lr=args.lr)
 ae_nu_loss_history = []
 
 for epoch in tqdm(range(num_epochs)):
-    loss = train_step_ae(ae_nu, ae_nu_optimizer, nu)
+    loss = train_step(ae_nu, ae_nu_optimizer, nu)
     ae_nu_loss_history.append(loss)
     if (epoch + 1) % 100 == 0:
         print(f"AE Nu Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}")
 
-if not os.path.exists("run_{0}".format(args.run_id)):
-    os.mkdir("run_{0}".format(args.run_id))
+save_path = "encoder_run_{0}".format(args.run_id)
+if not os.path.exists(save_path):
+    os.mkdir(save_path)
 
 # Save scripts used in the run and model
 # Scripts
-os.system("cp microstructure_encoder_main.py run_{0}/".format(args.run_id))
-os.system("cp m_encoder.py run_{0}/".format(args.run_id))
-os.system("cp util.py run_{0}/".format(args.run_id))
+os.system("cp microstructure_encoder_main.py {0}/".format(save_path))
+os.system("cp m_encoder.py {0}/".format(save_path))
+os.system("cp util.py {0}/".format(save_path))
 
 # Models
-torch.save(ae_E.state_dict(), "run_{0}/ae_E.pth".format(args.run_id))
-torch.save(ae_nu.state_dict(), "run_{0}/ae_nu.pth".format(args.run_id))
+torch.save(ae_E.state_dict(), "{0}/ae_E.pth".format(save_path))
+torch.save(ae_nu.state_dict(), "{0}/ae_nu.pth".format(save_path))
 
 run.finish()
