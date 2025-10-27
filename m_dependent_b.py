@@ -19,7 +19,6 @@ class EnergyFunctionM(nn.Module):
 
     def forward(self, u, v, E, nu):
         m_features = self.microstructure_encoder(E, nu)
-        print(m_features.device, u.device, v.device)
         x = torch.cat((u, v, m_features), dim=-1)
         x = torch.square(F.relu(self.fc1(x)))
         energy = self.fc2(x)
@@ -86,7 +85,7 @@ class ViscoelasticMaterialModelM(nn.Module):
 
     def forward(self, e, e_dot, E, nu):
         stress = []
-        xi = [torch.zeros_like(torch.zeros(e.shape[0], 1), requires_grad=True)]
+        xi = [torch.zeros(e.shape[0], 1, requires_grad=True, dtype=e.dtype, device=e.device)]
         s_eq, d = self.compute_energy_derivative(e[:, 0], xi[0], E, nu)
         for i in range(1, e.shape[1]):
             s_neq, kinetics = self.compute_dissipation_derivative(

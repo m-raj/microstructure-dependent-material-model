@@ -19,12 +19,14 @@
 #SBATCH --mail-type=FAIL
 
 # Run the mpi job
-python microstructure_encoder_main.py --run_id $1  \
+python main.py --run_id $1  \
                             	--data_path data/2024-10-13_PC1D_process10_data.pkl \
 			   	--epochs 1000 \
 				--lr 1e-3 \
-				--hidden_dim 128 \
-				--latent_dim 10 \
+				--encoder_hidden_dim 128 \
+				--encoder_latent_dim 10 \
 				--step 50 \
 				--n_samples 1000 \
+				--encoder_path encoder_run_4 \
+				--material_model m_dependent_b \
 				--device cuda
