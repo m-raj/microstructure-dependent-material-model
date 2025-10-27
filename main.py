@@ -1,9 +1,6 @@
 import torch, argparse, wandb, pickle, os
-from tqdm.notebook import tqdm
-
-from util import LossFunction
-from m_dependent_b import *
-from m_encoder import *
+from tqdm import tqdm
+import importlib
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -49,7 +46,17 @@ parser.add_argument(
     help="Path to the encoder model",
 )
 
+parser.add_argument(
+    "--material_model", type=str, default="m_dependent_b", help="Material model file"
+)
+
 args = parser.parse_args()
+
+
+mm = importlib.import_module("material_model")
+from util import LossFunction
+from m_encoder import *
+
 
 run = wandb.init(
     # Set the wandb entity where your project will be logged (generally your team name).
@@ -89,7 +96,7 @@ energy_hidden_dim = args.hidden_dim
 dissipation_input_dim = args.encoder_latent_dim * 2 + 2
 dissipation_hidden_dim = args.hidden_dim
 
-vmm = ViscoelasticMaterialModelM(
+vmm = mm.ViscoelasticMaterialModelM(
     energy_input_dim,
     energy_hidden_dim,
     dissipation_input_dim,
@@ -102,7 +109,7 @@ loss_history_m = []
 
 epochs = args.epochs
 for epoch in tqdm(range(epochs)):
-    loss = train_step_M(vmm, optimizer_m, e, e_dot, E, nu, s)
+    loss = mm.train_step_M(vmm, optimizer_m, e, e_dot, E, nu, s)
     loss_history_m.append(loss)
     wandb.log({"loss": loss, "epoch": epoch})
     if (epoch + 1) % 100 == 0:
