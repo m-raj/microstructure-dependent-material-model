@@ -3,6 +3,7 @@ from tqdm import tqdm
 import importlib
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--run_id", type=str, help="Identifier for the training run")
 parser.add_argument(
     "--data_path",
     type=str,
@@ -22,7 +23,7 @@ parser.add_argument(
 parser.add_argument(
     "--encoder_hidden_dim",
     type=int,
-    default=10,
+    default=128,
     help="Hidden dimension for the autoencoder",
 )
 
@@ -51,12 +52,11 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
-
-
-mm = importlib.import_module("material_model")
+mm = importlib.import_module(args.material_model)
 from util import LossFunction
 from m_encoder import *
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 run = wandb.init(
     # Set the wandb entity where your project will be logged (generally your team name).
@@ -77,16 +77,20 @@ with open("data/2024-10-13_PC1D_process10_data.pkl", "rb") as f:
 N = args.n_samples
 step = args.step
 
-e = torch.tensor(data["strain"][:N, ::step], dtype=torch.float32)
-e_dot = torch.tensor(data["strain_rate"][:N, ::step], dtype=torch.float32)
-s = torch.tensor(data["stress"][:N, ::step], dtype=torch.float32)
-E = torch.tensor(data["E"][:N], dtype=torch.float32)
-nu = torch.tensor(data["nu"][:N], dtype=torch.float32)
+e = torch.tensor(data["strain"][:N, ::step], dtype=torch.float32).to(device)
+e_dot = torch.tensor(data["strain_rate"][:N, ::step], dtype=torch.float32).to(device)
+s = torch.tensor(data["stress"][:N, ::step], dtype=torch.float32).to(device)
+E = torch.tensor(data["E"][:N], dtype=torch.float32).to(device)
+nu = torch.tensor(data["nu"][:N], dtype=torch.float32).to(device)
 
 loss_function = LossFunction()
 
-ae_E = AutoEncoder(E.shape[1], args.encoder_hidden_dim, args.encoder_latent_dim)
-ae_nu = AutoEncoder(nu.shape[1], args.encoder_hidden_dim, args.encoder_latent_dim)
+ae_E = AutoEncoder(E.shape[1], args.encoder_hidden_dim, args.encoder_latent_dim).to(
+    device
+)
+ae_nu = AutoEncoder(nu.shape[1], args.encoder_hidden_dim, args.encoder_latent_dim).to(
+    device
+)
 
 ae_E.load_state_dict(torch.load(f"{args.encoder_path}/ae_E.pth", weights_only=True))
 ae_nu.load_state_dict(torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=True))
@@ -103,7 +107,7 @@ vmm = mm.ViscoelasticMaterialModelM(
     dissipation_hidden_dim,
     ae_E.encoder,
     ae_nu.encoder,
-)
+).to(device)
 optimizer_m = torch.optim.Adam(vmm.parameters(), lr=args.lr)
 loss_history_m = []
 

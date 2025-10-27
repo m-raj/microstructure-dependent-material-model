@@ -39,6 +39,8 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+
 run = wandb.init(
     # Set the wandb entity where your project will be logged (generally your team name).
     entity="sci-ai",
@@ -56,12 +58,12 @@ with open(args.data_path, "rb") as f:
 
 N = args.n_samples
 step = args.step
-E = torch.tensor(data["E"][:N], dtype=torch.float32)
-nu = torch.tensor(data["nu"][:N], dtype=torch.float32)
+E = torch.tensor(data["E"][:N], dtype=torch.float32).to(device)
+nu = torch.tensor(data["nu"][:N], dtype=torch.float32).to(device)
 
 loss_function = LossFunction()
 
-ae_E = AutoEncoder(E.shape[1], args.hidden_dim, args.latent_dim)
+ae_E = AutoEncoder(E.shape[1], args.hidden_dim, args.latent_dim).to(device)
 ae_E_optimizer = torch.optim.Adam(ae_E.parameters(), lr=args.lr)
 ae_E_loss_history = []
 
@@ -73,7 +75,7 @@ for epoch in tqdm(range(num_epochs)):
     if (epoch + 1) % 100 == 0:
         tqdm.write(f"AE E Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}")
 
-ae_nu = AutoEncoder(nu.shape[1], args.hidden_dim, args.latent_dim)
+ae_nu = AutoEncoder(nu.shape[1], args.hidden_dim, args.latent_dim).to(device)
 ae_nu_optimizer = torch.optim.Adam(ae_nu.parameters(), lr=args.lr)
 ae_nu_loss_history = []
 
