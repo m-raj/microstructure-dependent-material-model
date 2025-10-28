@@ -99,5 +99,6 @@ os.system("cp util.py {0}/".format(save_path))
 # Models
 torch.save(ae_E.state_dict(), "{0}/ae_E.pth".format(save_path))
 torch.save(ae_nu.state_dict(), "{0}/ae_nu.pth".format(save_path))
+torch.save(args.__dict__, "{0}/args.pkl".format(save_path))
 
 run.finish()

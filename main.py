@@ -128,6 +128,7 @@ if not os.path.exists(save_path):
     os.makedirs(save_path)
 
 torch.save(vmm.state_dict(), "{0}/vmm_m.pth".format(save_path))
+torch.save(args.__dict__, "{0}/args.pkl".format(save_path))
 
 os.system("cp main.py {0}/".format(save_path))
 os.system("cp m_dependent_b.py {0}/".format(save_path))
