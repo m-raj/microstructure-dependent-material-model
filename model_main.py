@@ -20,7 +20,7 @@ parser.add_argument(
     "--lr", type=float, default=1e-3, help="Learning rate for the optimizer"
 )
 parser.add_argument(
-    "--hidden_dim", type=int, default=10, help="Hidden dimension for the autoencoder"
+    "--hidden_dim", type=int, default=20, help="Hidden dimension for the autoencoder"
 )
 
 parser.add_argument(
@@ -46,7 +46,7 @@ parser.add_argument(
 parser.add_argument(
     "--encoder_path",
     type=str,
-    default="run_1",
+    default="encoder_run_2",
     help="Path to the encoder model",
 )
 
@@ -127,7 +127,7 @@ save_path = "material_model_run_{0}".format(args.run_id)
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
-torch.save(vmm.state_dict(), "{0}/vmm_m.pth".format(save_path))
+torch.save(vmm.state_dict(), "{0}/vmm.pth".format(save_path))
 torch.save(args.__dict__, "{0}/args.pkl".format(save_path))
 
 os.system("cp main.py {0}/".format(save_path))

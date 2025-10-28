@@ -25,7 +25,7 @@ parser.add_argument(
     "--lr", type=float, default=1e-3, help="Learning rate for the optimizer"
 )
 parser.add_argument(
-    "--hidden_dim", type=int, default=10, help="Hidden dimension for the autoencoder"
+    "--hidden_dim", type=int, default=128, help="Hidden dimension for the autoencoder"
 )
 parser.add_argument(
     "--latent_dim", type=int, default=10, help="Latent dimension for the autoencoder"
