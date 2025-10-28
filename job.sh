@@ -4,8 +4,6 @@
 #SBATCH --nodes=1
 
 # Number of GPUs
-#SBATCH --partition=gpu
-#SBATCH --gres=gpu:1
 # SBATCH --constraint="cascadelake"
 
 # Wall time: maximum allowed run time
@@ -26,5 +24,5 @@ python microstructure_encoder_main.py --run_id $1  \
 				--hidden_dim 128 \
 				--latent_dim 10 \
 				--step 50 \
-				--n_samples 1000 \
-				--device cuda
+				--n_samples 10 \
+				--device $2
