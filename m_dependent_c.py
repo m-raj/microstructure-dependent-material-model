@@ -37,16 +37,14 @@ class EnergyFunctionM(nn.Module):
 
 
 class InverseDissipationPotentialM(nn.Module):
-    def __init__(self, input_dim, hidden_dim, E_encoder, nu_encoder):
+    def __init__(self, y_dim, x_dim, hidden_dim, E_encoder, nu_encoder):
         super(InverseDissipationPotentialM, self).__init__()
 
         # Microstructure encoder
         self.E_encoder = E_encoder
         self.nu_encoder = nu_encoder
 
-        mu_dim = 20 + 1
-
-        self.picnn = PartiallyInputConvex(1, mu_dim, hidden_dim, hidden_dim)
+        self.picnn = PartiallyInputConvex(y_dim, x_dim, hidden_dim, hidden_dim)
 
     def microstructure_encoder(self, E, nu):
         x = torch.cat((self.E_encoder(E), self.nu_encoder(nu)), dim=-1)
@@ -82,8 +80,12 @@ class ViscoelasticMaterialModelM(nn.Module):
         self.energy_function = EnergyFunctionM(
             energy_input_dim, energy_hidden_dim, E_encoder, nu_encoder
         )
+        y_dim, x_dim = (
+            dissipation_input_dim[1],
+            dissipation_input_dim[0] + dissipation_input_dim[2],
+        )
         self.dissipation_potential = InverseDissipationPotentialM(
-            dissipation_input_dim, dissipation_hidden_dim, E_encoder, nu_encoder
+            y_dim, x_dim, dissipation_hidden_dim, E_encoder, nu_encoder
         )
         self.dt = dt  # Time step size
 

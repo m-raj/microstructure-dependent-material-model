@@ -78,6 +78,7 @@ class ViscoelasticMaterialModelM(nn.Module):
         self.energy_function = EnergyFunctionM(
             energy_input_dim, energy_hidden_dim, E_encoder, nu_encoder
         )
+        dissipation_input_dim = sum(dissipation_input_dim)
         self.dissipation_potential = InverseDissipationPotentialM(
             dissipation_input_dim, dissipation_hidden_dim, E_encoder, nu_encoder
         )
