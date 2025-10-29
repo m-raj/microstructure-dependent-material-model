@@ -19,10 +19,10 @@
 # Run the mpi job
 python encoder_main.py --run_id $1  \
                             	--data_path data/2024-10-13_PC1D_process10_data.pkl \
-			   	--epochs 1000 \
+			   	--epochs 4000 \
 				--lr 1e-3 \
-				--hidden_dim 128 \
-				--latent_dim 10 \
+				--hidden_dim 512 \
+				--latent_dim 15 \
 				--step 50 \
-				--n_samples 10 \
-				--device $2
+				--n_samples 1000 \
+				--device cpu

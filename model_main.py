@@ -51,7 +51,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--material_model", type=str, default="m_dependent_b", help="Material model file"
+    "--material_model", type=str, default="m_dependent_c", help="Material model file"
 )
 
 args = parser.parse_args()
