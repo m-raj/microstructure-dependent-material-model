@@ -111,16 +111,22 @@ vmm = mm.ViscoelasticMaterialModelM(
     ae_E.encoder,
     ae_nu.encoder,
 ).to(device)
-optimizer_m = torch.optim.Adam(vmm.parameters(), lr=args.lr)
-loss_history_m = []
+optimizer = torch.optim.Adam(vmm.parameters(), lr=args.lr)
+loss_history = []
 
 epochs = args.epochs
 for epoch in tqdm(range(epochs)):
-    loss = mm.train_step_M(vmm, optimizer_m, e, e_dot, E, nu, s)
-    loss_history_m.append(loss)
-    wandb.log({"loss": loss, "epoch": epoch})
+    loss = mm.train_step_M(vmm, optimizer, e, e_dot, E, nu, s)
+    loss_history.append(loss)
+    wandb.log({"loss": loss, "epoch": epoch, "lr": optimizer.param_groups[0]["lr"]})
     if (epoch + 1) % 100 == 0:
-        print(f"Epoch [{epoch+1}/{epochs}], Loss: {loss:.4f}")
+        rel_error = loss_function.L2RelativeError(
+            vmm(e, e_dot, E, nu)[0], s, reduction="mean"
+        ).item()
+        wandb.log({"Relative_Error": rel_error})
+        tqdm.write(
+            f"Epoch [{epoch+1}/{epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
+        )
 
 save_path = "material_model_run_{0}".format(args.run_id)
 

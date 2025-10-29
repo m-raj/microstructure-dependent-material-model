@@ -71,9 +71,21 @@ num_epochs = args.epochs
 for epoch in tqdm(range(num_epochs)):
     loss = train_step(ae_E, ae_E_optimizer, E)
     ae_E_loss_history.append(loss)
-    run.log({"AE_E_Loss": loss, "epoch": epoch})
+    run.log(
+        {
+            "AE_E_Loss": loss,
+            "E_epoch": epoch,
+            "E_lr": ae_E_optimizer.param_groups[0]["lr"],
+        }
+    )
     if (epoch + 1) % 100 == 0:
-        tqdm.write(f"AE E Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}")
+        rel_error = loss_function.L2RelativeError(
+            ae_E(E).unsqueeze(-1), E.unsqueeze(-1), reduction="mean"
+        ).item()
+        run.log({"AE_E_Relative_Error": rel_error})
+        tqdm.write(
+            f"AE E Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
+        )
 
 ae_nu = AutoEncoder(nu.shape[1], args.hidden_dim, args.latent_dim).to(device)
 ae_nu_optimizer = torch.optim.Adam(ae_nu.parameters(), lr=args.lr)
@@ -82,9 +94,21 @@ ae_nu_loss_history = []
 for epoch in tqdm(range(num_epochs)):
     loss = train_step(ae_nu, ae_nu_optimizer, nu)
     ae_nu_loss_history.append(loss)
-    run.log({"AE_nu_Loss": loss, "epoch": epoch})
+    run.log(
+        {
+            "AE_nu_Loss": loss,
+            "AE_epoch": epoch,
+            "AE_lr": ae_nu_optimizer.param_groups[0]["lr"],
+        }
+    )
     if (epoch + 1) % 100 == 0:
-        print(f"AE Nu Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}")
+        rel_error = loss_function.L2RelativeError(
+            ae_nu(nu).unsqueeze(-1), nu.unsqueeze(-1), reduction="mean"
+        ).item()
+        run.log({"AE_nu_Relative_Error": rel_error})
+        tqdm.write(
+            f"AE Nu Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
+        )
 
 save_path = "encoder_run_{0}".format(args.run_id)
 if not os.path.exists(save_path):

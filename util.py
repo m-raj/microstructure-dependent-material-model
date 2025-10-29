@@ -3,18 +3,24 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class LossFunction:
+class LossFunction(torch.nn.Module):
     def __init__(self):
         super(LossFunction, self).__init__()
 
-    def L2_norm(self, x):
-        """L2 Norm"""
-        return torch.square(torch.norm(x, dim=-1)).mean()
+    def L2NormSquared(self, x):
+        "x : [B, T, D]"
+        return torch.mean(torch.sum(torch.square(x), dim=-1), dim=1)
 
-    def L2_error(self, predictions, targets):
-        """L2 Error in time"""
-        return self.L2_norm(predictions - targets)
+    def L2Norm(self, x):
+        "x : [B, T, D]"
+        return torch.sqrt(self.L2NormSquared(x))
 
-    def relative_error(self, predictions, targets):
-        """Relative Error"""
-        return torch.sqrt(self.L2_error(predictions, targets) / self.L2_norm(targets))
+    def L2RelativeError(self, x, y, reduction="mean"):
+        error = x - y
+        rel_error = self.L2Norm(error) / (self.L2Norm(y) + 1.0e-8)
+        if reduction == "mean":
+            return torch.mean(rel_error)
+        elif not (reduction):
+            return rel_error
+        else:
+            print("Not a valid reduction method: " + reduction)
