@@ -17,7 +17,7 @@
 #SBATCH --mail-type=FAIL
 
 # Run the mpi job
-python microstructure_encoder_main.py --run_id $1  \
+python encoder_main.py --run_id $1  \
                             	--data_path data/2024-10-13_PC1D_process10_data.pkl \
 			   	--epochs 1000 \
 				--lr 1e-3 \
