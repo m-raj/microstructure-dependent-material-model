@@ -14,8 +14,6 @@ class EnergyFunctionM(nn.Module):
         self.E_encoder = E_encoder
         self.nu_encoder = nu_encoder
 
-        self.activation = ReluSquare()
-
     def microstructure_encoder(self, E, nu):
         x = torch.cat((self.E_encoder(E), self.nu_encoder(nu)), dim=-1)
         return x
@@ -23,7 +21,7 @@ class EnergyFunctionM(nn.Module):
     def forward(self, u, v, E, nu):
         m_features = self.microstructure_encoder(E, nu)
         x = torch.cat((u, v, m_features), dim=-1)
-        x = self.activation((self.fc1(x)))
+        x = torch.square(F.relu(self.fc1(x)))
         energy = self.fc2(x)
         return energy.squeeze(-1)
 
