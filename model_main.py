@@ -122,14 +122,13 @@ for epoch in tqdm(range(epochs)):
         loss = mm.train_step(vmm, optimizer, *batch_x, batch_y)
     loss_history.append(loss)
     wandb.log({"loss": loss, "epoch": epoch, "lr": optimizer.param_groups[0]["lr"]})
-    if (epoch + 1) % 100 == 0:
-        rel_error = loss_function.L2RelativeError(
-            vmm(*batch_x)[0], batch_y, reduction="mean"
-        ).item()
-        wandb.log({"Relative_Error": rel_error})
-        tqdm.write(
-            f"Epoch [{epoch+1}/{epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
-        )
+    rel_error = loss_function.L2RelativeError(
+        vmm(*batch_x)[0], batch_y, reduction="mean"
+    ).item()
+    wandb.log({"Relative_Error": rel_error})
+    tqdm.write(
+        f"Epoch [{epoch+1}/{epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
+    )
 
 save_path = "material_model_run_{0}".format(args.run_id)
 
