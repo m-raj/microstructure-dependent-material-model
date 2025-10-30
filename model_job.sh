@@ -7,7 +7,7 @@
 # SBATCH --constraint="cascadelake"
 
 # Wall time: maximum allowed run time
-#SBATCH --time=5:00:00
+#SBATCH --time=10:00:00
 # SBATCH --qos=debug
 
 # Send email to user
@@ -25,7 +25,7 @@ python model_main.py --run_id $1  \
 				--encoder_hidden_dim 512 \
 				--encoder_latent_dim 15 \
 				--step 50 \
-				--n_samples 1000 \
+				--n_samples 100 \
 				--encoder_path encoder_run_5 \
 				--material_model m_dependent_c \
 				--device cpu
