@@ -25,7 +25,8 @@ python model_main.py --run_id $1  \
 				--encoder_hidden_dim 512 \
 				--encoder_latent_dim 15 \
 				--step 50 \
-				--n_samples 100 \
+				--n_samples 1000 \
 				--encoder_path encoder_run_5 \
 				--material_model m_dependent_c \
-				--device cpu
+				--device cpu \
+				--batch_size 32
