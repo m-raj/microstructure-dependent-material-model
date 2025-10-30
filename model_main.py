@@ -1,6 +1,7 @@
 import torch, argparse, wandb, pickle, os
 from tqdm import tqdm
 import importlib
+from torch.utils.data import DataLoader
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_id", type=str, help="Identifier for the training run")
@@ -41,7 +42,7 @@ parser.add_argument(
     "--step", type=int, default=50, help="Step size for downsampling the data"
 )
 parser.add_argument(
-    "--n_samples", type=int, default=10, help="Number of samples to use for training"
+    "--n_samples", type=int, default=100, help="Number of samples to use for training"
 )
 parser.add_argument(
     "--encoder_path",
@@ -54,9 +55,14 @@ parser.add_argument(
     "--material_model", type=str, default="m_dependent_c", help="Material model file"
 )
 
+parser.add_argument(
+    "--batch_size", type=int, default=32, help="Batch size for training"
+)
+
 args = parser.parse_args()
+
 mm = importlib.import_module(args.material_model)
-from util import LossFunction
+from util import *
 from m_encoder import *
 
 device = torch.device(args.device if torch.cuda.is_available() else "cpu")
@@ -73,27 +79,22 @@ run = wandb.init(
 )
 
 
-with open("data/2024-10-13_PC1D_process10_data.pkl", "rb") as f:
-    data = pickle.load(f)
+dataset = ViscoelasticDataset(
+    data_path=args.data_path, N=args.n_samples, step=args.step, device=args.device
+)
 
-
-N = args.n_samples
-step = args.step
-
-e = torch.tensor(data["strain"][:N, ::step], dtype=torch.float32).to(device)
-e_dot = torch.tensor(data["strain_rate"][:N, ::step], dtype=torch.float32).to(device)
-s = torch.tensor(data["stress"][:N, ::step], dtype=torch.float32).to(device)
-E = torch.tensor(data["E"][:N], dtype=torch.float32).to(device)
-nu = torch.tensor(data["nu"][:N], dtype=torch.float32).to(device)
+dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
 loss_function = LossFunction()
 
-ae_E = AutoEncoder(E.shape[1], args.encoder_hidden_dim, args.encoder_latent_dim).to(
-    device
-)
-ae_nu = AutoEncoder(nu.shape[1], args.encoder_hidden_dim, args.encoder_latent_dim).to(
-    device
-)
+encoder_input_dim = 501
+
+ae_E = AutoEncoder(
+    encoder_input_dim, args.encoder_hidden_dim, args.encoder_latent_dim
+).to(device)
+ae_nu = AutoEncoder(
+    encoder_input_dim, args.encoder_hidden_dim, args.encoder_latent_dim
+).to(device)
 
 ae_E.load_state_dict(torch.load(f"{args.encoder_path}/ae_E.pth", weights_only=True))
 ae_nu.load_state_dict(torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=True))
@@ -116,12 +117,14 @@ loss_history = []
 
 epochs = args.epochs
 for epoch in tqdm(range(epochs)):
-    loss = mm.train_step_M(vmm, optimizer, e, e_dot, E, nu, s)
+    for batch_x, batch_y in dataloader:
+        print("epoch:", epoch)
+        loss = mm.train_step(vmm, optimizer, *batch_x, batch_y)
     loss_history.append(loss)
     wandb.log({"loss": loss, "epoch": epoch, "lr": optimizer.param_groups[0]["lr"]})
     if (epoch + 1) % 100 == 0:
         rel_error = loss_function.L2RelativeError(
-            vmm(e, e_dot, E, nu)[0], s, reduction="mean"
+            vmm(*batch_x)[0], batch_y, reduction="mean"
         ).item()
         wandb.log({"Relative_Error": rel_error})
         tqdm.write(

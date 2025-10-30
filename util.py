@@ -1,6 +1,6 @@
-import torch
-import torch.nn as nn
+import torch, pickle
 import torch.nn.functional as F
+from torch.utils.data import Dataset
 
 
 class LossFunction(torch.nn.Module):
@@ -24,3 +24,31 @@ class LossFunction(torch.nn.Module):
             return rel_error
         else:
             print("Not a valid reduction method: " + reduction)
+
+
+class ViscoelasticDataset(Dataset):
+    def __init__(self, data_path, N, step, device="cpu"):
+        with open(data_path, "rb") as f:
+            data = pickle.load(f)
+
+        self.e = torch.tensor(data["strain"][:N, ::step], dtype=torch.float32)
+        self.e_dot = torch.tensor(data["strain_rate"][:N, ::step], dtype=torch.float32)
+        self.s = torch.tensor(data["stress"][:N, ::step], dtype=torch.float32)
+
+        self.E = torch.tensor(data["E"][:N], dtype=torch.float32)
+        self.nu = torch.tensor(data["nu"][:N], dtype=torch.float32)
+
+        self.device = device
+
+    def __len__(self):
+        return len(self.e)
+
+    def __getitem__(self, idx):
+        x = (
+            self.e[idx].to(self.device),
+            self.e_dot[idx].to(self.device),
+            self.E[idx].to(self.device),
+            self.nu[idx].to(self.device),
+        )
+        y = self.s[idx].to(self.device)
+        return x, y
