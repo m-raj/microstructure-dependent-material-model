@@ -115,10 +115,11 @@ vmm = mm.ViscoelasticMaterialModelM(
 optimizer = torch.optim.Adam(vmm.parameters(), lr=args.lr)
 loss_history = []
 
+# wandb.watch(vmm, log="all", log_freq=10)
 epochs = args.epochs
 for epoch in tqdm(range(epochs)):
     for batch_x, batch_y in dataloader:
-        print("epoch:", epoch)
+        # print("epoch:", epoch)
         loss = mm.train_step(vmm, optimizer, *batch_x, batch_y)
     loss_history.append(loss)
     wandb.log({"loss": loss, "epoch": epoch, "lr": optimizer.param_groups[0]["lr"]})
