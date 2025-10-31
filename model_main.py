@@ -140,7 +140,7 @@ for epoch in tqdm(range(epochs)):
     )
     curr_time = time.time()
     time_diff = (curr_time - start_time) / 60.0
-    if time_diff > hrs * 60 - 20:
+    if time_diff > args.hrs * 60 - 20:
         break
 
 
