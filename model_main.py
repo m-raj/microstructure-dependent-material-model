@@ -1,7 +1,7 @@
 import torch, argparse, wandb, pickle, os
 from tqdm import tqdm
 import importlib, time
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 
 start_time = time.time()
 parser = argparse.ArgumentParser()
@@ -87,8 +87,13 @@ run = wandb.init(
 dataset = ViscoelasticDataset(
     data_path=args.data_path, N=args.n_samples, step=args.step, device=args.device
 )
+length = len(dataset)
+train_length, val_length = int(0.8 * length), length - int(0.8 * length)
 
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+trainset, valset = random_split(dataset, [train_length, val_length])
+indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
+dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False)
 
 loss_function = LossFunction()
 
@@ -138,6 +143,16 @@ for epoch in tqdm(range(epochs)):
     tqdm.write(
         f"Epoch [{epoch+1}/{epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
     )
+
+    # Validation step
+    val_rel_error = 0.0
+    for val_batch_x, val_batch_y in val_dataloader:
+        val_rel_error += loss_function.L2RelativeError(
+            vmm(*val_batch_x)[0], val_batch_y, reduction="mean"
+        ).item()
+    val_rel_error /= len(valset) / val_dataloader.batch_size
+    wandb.log({"val_Relative_Error": val_rel_error})
+
     curr_time = time.time()
     time_diff = (curr_time - start_time) / 60.0
     if time_diff > args.hrs * 60 - 20:
@@ -150,7 +165,7 @@ if not os.path.exists(save_path):
     os.makedirs(save_path)
 
 torch.save(vmm.state_dict(), "{0}/vmm.pth".format(save_path))
-torch.save(args.__dict__, "{0}/args.pkl".format(save_path))
+torch.save(args.__dict__ | indices, "{0}/args.pkl".format(save_path))
 
 os.system("cp main.py {0}/".format(save_path))
 os.system("cp m_dependent_b.py {0}/".format(save_path))
