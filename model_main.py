@@ -1,8 +1,9 @@
 import torch, argparse, wandb, pickle, os
 from tqdm import tqdm
-import importlib
+import importlib, time
 from torch.utils.data import DataLoader
 
+start_time = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_id", type=str, help="Identifier for the training run")
 parser.add_argument(
@@ -57,6 +58,10 @@ parser.add_argument(
 
 parser.add_argument(
     "--batch_size", type=int, default=32, help="Batch size for training"
+)
+
+parser.add_argument(
+    "--hrs", type=float, default=1.0, help="Maximum training time in hours"
 )
 
 args = parser.parse_args()
@@ -133,6 +138,11 @@ for epoch in tqdm(range(epochs)):
     tqdm.write(
         f"Epoch [{epoch+1}/{epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
     )
+    curr_time = time.time()
+    time_diff = (curr_time - start_time) / 60.0
+    if time_diff > hrs * 60 - 20:
+        break
+
 
 save_path = "material_model_run_{0}".format(args.run_id)
 
