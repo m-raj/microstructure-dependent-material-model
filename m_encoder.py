@@ -23,6 +23,22 @@ class AutoEncoder(nn.Module):
         reconstructed = self.decoder(latent)
         return reconstructed
 
+    def freeze_encoder(self):
+        for param in self.encoder.parameters():
+            param.requires_grad = False
+
+    def freeze_decoder(self):
+        for param in self.decoder.parameters():
+            param.requires_grad = False
+
+    def unfreeze_encoder(self):
+        for param in self.encoder.parameters():
+            param.requires_grad = True
+
+    def unfreeze_decoder(self):
+        for param in self.decoder.parameters():
+            param.requires_grad = True
+
 
 def train_step(model, optimizer, data):
     model.train()

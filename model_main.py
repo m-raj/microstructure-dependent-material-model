@@ -104,6 +104,9 @@ energy_hidden_dim = args.hidden_dim
 dissipation_input_dim = (1, 1, args.encoder_latent_dim * 2)  # (p_dim, q_dim, m_dim)
 dissipation_hidden_dim = args.hidden_dim
 
+ae_E.freeze_encoder()
+ae_nu.freeze_encoder()
+
 vmm = mm.ViscoelasticMaterialModelM(
     energy_input_dim,
     energy_hidden_dim,
