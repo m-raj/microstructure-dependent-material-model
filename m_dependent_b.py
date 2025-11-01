@@ -76,7 +76,7 @@ class ViscoelasticMaterialModelM(nn.Module):
     ):
         super(ViscoelasticMaterialModelM, self).__init__()
         self.energy_function = EnergyFunctionM(
-            energy_input_dim, energy_hidden_dim, E_encoder, nu_encoder
+            sum(energy_input_dim), energy_hidden_dim, E_encoder, nu_encoder
         )
         dissipation_input_dim = sum(dissipation_input_dim)
         self.dissipation_potential = InverseDissipationPotentialM(
@@ -121,7 +121,7 @@ def train_step(model, optimizer, e, e_dot, E, nu, s_true):
     return loss.item()
 
 
-def prediction_step_M(model, e, e_dot, E, nu):
+def prediction_step(model, e, e_dot, E, nu):
     model.eval()
     s_pred, xi = model(e, e_dot, E, nu)
     return s_pred, xi
