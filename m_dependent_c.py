@@ -118,3 +118,9 @@ def train_step(model, optimizer, e, e_dot, E, nu, s_true):
     loss.backward()
     optimizer.step()
     return loss.item()
+
+
+def prediction_step(model, e, e_dot, E, nu):
+    model.eval()
+    s_pred, xi = model(e, e_dot, E, nu)
+    return s_pred, xi

@@ -3,7 +3,7 @@ from tqdm import tqdm
 import argparse
 
 # Custom imports
-from util import LossFunction
+from util import LossFunction, ViscoelasticDataset, DataLoader
 from m_encoder import *
 
 
@@ -53,24 +53,32 @@ run = wandb.init(
 )
 
 # Load a pickle file
+dataset = ViscoelasticDataset(
+    data_path=args.data_path,
+    N=args.n_samples,
+    step=args.step,
+    device=device,
+)
+length = len(dataset)
+train_length, val_length = int(0.8 * length), length - int(0.8 * length)
+trainset, valset = torch.utils.data.random_split(dataset, [train_length, val_length])
+dataloader = DataLoader(dataset, batch_size=args.n_samples, shuffle=True)
+val_dataloader = DataLoader(valset, batch_size=args.n_samples, shuffle=False)
+
 with open(args.data_path, "rb") as f:
     data = pickle.load(f)
 
-N = args.n_samples
-step = args.step
-E = torch.tensor(data["E"][:N], dtype=torch.float32).to(device)
-nu = torch.tensor(data["nu"][:N], dtype=torch.float32).to(device)
-
 loss_function = LossFunction()
 
-ae_E = AutoEncoder(E.shape[1], args.hidden_dim, args.latent_dim).to(device)
+ae_E = AutoEncoder(501, args.hidden_dim, args.latent_dim).to(device)
 ae_E_optimizer = torch.optim.Adam(ae_E.parameters(), lr=args.lr)
 ae_E_loss_history = []
 
 num_epochs = args.epochs
 for epoch in tqdm(range(num_epochs)):
-    loss = train_step(ae_E, ae_E_optimizer, E)
-    ae_E_loss_history.append(loss)
+    for E_batch, _ in dataloader:
+        loss = train_step(ae_E, ae_E_optimizer, E_batch)
+        ae_E_loss_history.append(loss)
     run.log(
         {
             "E_Loss": loss,
@@ -87,7 +95,7 @@ for epoch in tqdm(range(num_epochs)):
             f"E Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
         )
 
-ae_nu = AutoEncoder(nu.shape[1], args.hidden_dim, args.latent_dim).to(device)
+ae_nu = AutoEncoder(501, args.hidden_dim, args.latent_dim).to(device)
 ae_nu_optimizer = torch.optim.Adam(ae_nu.parameters(), lr=args.lr)
 ae_nu_loss_history = []
 

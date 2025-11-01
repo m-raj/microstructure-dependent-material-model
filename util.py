@@ -43,12 +43,16 @@ class ViscoelasticDataset(Dataset):
     def __len__(self):
         return len(self.e)
 
-    def __getitem__(self, idx):
-        x = (
-            self.e[idx].to(self.device),
-            self.e_dot[idx].to(self.device),
-            self.E[idx].to(self.device),
-            self.nu[idx].to(self.device),
-        )
-        y = self.s[idx].to(self.device)
-        return x, y
+    def __getitem__(self, idx, encoder=False):
+        if encoder:
+            x = self.E[idx].to(self.device), self.nu[idx].to(self.device)
+            return x
+        else:
+            x = (
+                self.e[idx].to(self.device),
+                self.e_dot[idx].to(self.device),
+                self.E[idx].to(self.device),
+                self.nu[idx].to(self.device),
+            )
+            y = self.s[idx].to(self.device)
+            return x, y

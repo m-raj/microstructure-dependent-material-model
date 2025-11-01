@@ -1,4 +1,4 @@
-import torch, argparse, wandb, pickle, os
+import torch, argparse, wandb, os
 from tqdm import tqdm
 import importlib, time
 from torch.utils.data import DataLoader, random_split
@@ -53,7 +53,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--material_model", type=str, default="m_dependent_c", help="Material model file"
+    "--material_model", type=str, default="m_dependent_b", help="Material model file"
 )
 
 parser.add_argument(
