@@ -5,15 +5,14 @@ from convex_network import *
 
 
 class EnergyFunctionM(nn.Module):
-    def __init__(self, input_dim, hidden_dim, E_encoder, nu_encoder):
+    def __init__(self, y_dim, x_dim, hidden_dim, E_encoder, nu_encoder):
         super(EnergyFunctionM, self).__init__()
 
         # Microstructure encoder
         self.E_encoder = E_encoder
         self.nu_encoder = nu_encoder
 
-        mu_dim = 21
-        self.picnn = PartiallyInputConvex(1, mu_dim, hidden_dim, hidden_dim)
+        self.picnn = PartiallyInputConvex(y_dim, x_dim, hidden_dim, hidden_dim)
 
         self.activation = ReluSquare()
 
@@ -77,8 +76,14 @@ class ViscoelasticMaterialModelM(nn.Module):
         dt=0.01,
     ):
         super(ViscoelasticMaterialModelM, self).__init__()
+
+        y_dim, x_dim = (
+            energy_input_dim[1],
+            energy_input_dim[0] + energy_input_dim[2],
+        )
+
         self.energy_function = EnergyFunctionM(
-            energy_input_dim, energy_hidden_dim, E_encoder, nu_encoder
+            y_dim, x_dim, energy_hidden_dim, E_encoder, nu_encoder
         )
         y_dim, x_dim = (
             dissipation_input_dim[1],

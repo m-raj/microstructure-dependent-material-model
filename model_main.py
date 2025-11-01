@@ -109,7 +109,7 @@ ae_nu = AutoEncoder(
 ae_E.load_state_dict(torch.load(f"{args.encoder_path}/ae_E.pth", weights_only=True))
 ae_nu.load_state_dict(torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=True))
 
-energy_input_dim = args.encoder_latent_dim * 2 + 2
+energy_input_dim = (1, 1, args.encoder_latent_dim * 2)
 energy_hidden_dim = args.hidden_dim
 dissipation_input_dim = (1, 1, args.encoder_latent_dim * 2)  # (p_dim, q_dim, m_dim)
 dissipation_hidden_dim = args.hidden_dim
