@@ -9,7 +9,7 @@
 #SBATCH --gres gpu:1
 
 # Wall time: maximum allowed run time
-#SBATCH --time=20:20:00
+#SBATCH --time=9:20:00
 # SBATCH --qos=debug
 
 # Send email to user
@@ -31,5 +31,5 @@ python model_main.py --run_id $1  \
 				--encoder_path encoder_run_5 \
 				--material_model m_dependent_d \
 				--device cuda \
-				--batch_size 200 \
-				--hrs 20
+				--batch_size 1000 \
+				--hrs 9
