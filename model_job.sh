@@ -5,9 +5,11 @@
 
 # Number of GPUs 
 # SBATCH --constraint="cascadelake"
+#SBATCH --partition gpu
+#SBATCH --gres gpu:1
 
 # Wall time: maximum allowed run time
-#SBATCH --time=21:00:00
+#SBATCH --time=20:20:00
 # SBATCH --qos=debug
 
 # Send email to user
@@ -19,7 +21,7 @@
 # Run the mpi job
 python model_main.py --run_id $1  \
                             	--data_path data/2024-10-13_PC1D_process10_data.pkl \
-			   	--epochs 2500 \
+			   	--epochs 5000 \
 				--lr 1e-3 \
 				--hidden_dim 300 \
 				--encoder_hidden_dim 512 \
@@ -27,7 +29,7 @@ python model_main.py --run_id $1  \
 				--step 50 \
 				--n_samples 1000 \
 				--encoder_path encoder_run_5 \
-				--material_model m_dependent_c \
-				--device cpu \
-				--batch_size 32 \
+				--material_model m_dependent_d \
+				--device cuda \
+				--batch_size 200 \
 				--hrs 20
