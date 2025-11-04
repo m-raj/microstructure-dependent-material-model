@@ -75,6 +75,7 @@ class ViscoelasticMaterialModelM(nn.Module):
         dt=0.01,
     ):
         super(ViscoelasticMaterialModelM, self).__init__()
+        self.niv = energy_input_dim[1]
         self.energy_function = EnergyFunctionM(
             sum(energy_input_dim), energy_hidden_dim, E_encoder, nu_encoder
         )
@@ -88,7 +89,7 @@ class ViscoelasticMaterialModelM(nn.Module):
         stress = []
         xi = [
             torch.zeros(
-                e.shape[0], 1, requires_grad=True, dtype=e.dtype, device=e.device
+                e.shape[0], self.niv, requires_grad=True, dtype=e.dtype, device=e.device
             )
         ]
         s_eq, d = self.compute_energy_derivative(e[:, 0], xi[0], E, nu)

@@ -86,10 +86,11 @@ class ViscoelasticMaterialModelM(nn.Module):
             y_dim, x_dim, dissipation_hidden_dim, E_encoder, nu_encoder
         )
         self.dt = dt  # Time step size
+        self.niv = energy_input_dim[1]
 
     def forward(self, e, e_dot, E, nu):
         stress = []
-        xi = [torch.zeros_like(torch.zeros(e.shape[0], 1), requires_grad=True)]
+        xi = [torch.zeros_like(torch.zeros(e.shape[0], self.niv), requires_grad=True)]
         s_eq, d = self.compute_energy_derivative(e[:, 0], xi[0], E, nu)
         for i in range(1, e.shape[1]):
             s_neq, kinetics = self.compute_dissipation_derivative(

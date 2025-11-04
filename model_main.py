@@ -109,9 +109,9 @@ ae_nu = AutoEncoder(
 ae_E.load_state_dict(torch.load(f"{args.encoder_path}/ae_E.pth", weights_only=True))
 ae_nu.load_state_dict(torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=True))
 
-energy_input_dim = (1, 1, args.encoder_latent_dim * 2)
+energy_input_dim = (1, 3, args.encoder_latent_dim * 2)
 energy_hidden_dim = args.hidden_dim
-dissipation_input_dim = (1, 1, args.encoder_latent_dim * 2)  # (p_dim, q_dim, m_dim)
+dissipation_input_dim = (1, 3, args.encoder_latent_dim * 2)  # (p_dim, q_dim, m_dim)
 dissipation_hidden_dim = args.hidden_dim
 
 ae_E.freeze_encoder()
@@ -129,7 +129,8 @@ optimizer = torch.optim.Adam(vmm.parameters(), lr=args.lr)
 loss_history = []
 
 # continue_training_script
-vmm.load_state_dict(torch.load("material_model_run_d4/vmm.pth"))
+# vmm.load_state_dict(torch.load("material_model_run_d5/vmm.pth"))
+# optimizer.load_state_dict(torch.load("material_model_run_d5/optimizer.pth"))
 
 # wandb.watch(vmm, log="all", log_freq=10)
 epochs = args.epochs

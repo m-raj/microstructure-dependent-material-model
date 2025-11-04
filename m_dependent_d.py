@@ -78,9 +78,10 @@ class ViscoelasticMaterialModelM(nn.Module):
         super(ViscoelasticMaterialModelM, self).__init__()
 
         y_dim, x_dim = (
-            energy_input_dim[1],
-            energy_input_dim[0] + energy_input_dim[2],
+            energy_input_dim[0],
+            energy_input_dim[1] + energy_input_dim[2],
         )
+        self.niv = energy_input_dim[1]
 
         self.energy_function = EnergyFunctionM(
             y_dim, x_dim, energy_hidden_dim, E_encoder, nu_encoder
@@ -96,7 +97,7 @@ class ViscoelasticMaterialModelM(nn.Module):
 
     def forward(self, e, e_dot, E, nu):
         stress = []
-        xi = [torch.zeros(e.shape[0], 1, requires_grad=True, device=e.device, dtype=e.dtype)]
+        xi = [torch.zeros(e.shape[0], self.niv, requires_grad=True, device=e.device, dtype=e.dtype)]
         s_eq, d = self.compute_energy_derivative(e[:, 0], xi[0], E, nu)
         for i in range(1, e.shape[1]):
             s_neq, kinetics = self.compute_dissipation_derivative(
