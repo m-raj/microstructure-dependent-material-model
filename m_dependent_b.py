@@ -73,7 +73,7 @@ class ViscoelasticMaterialModelM(nn.Module):
         dissipation_hidden_dim,
         E_encoder,
         nu_encoder,
-        dt=0.01,
+        dt,
     ):
         super(ViscoelasticMaterialModelM, self).__init__()
         self.niv = energy_input_dim[1]
