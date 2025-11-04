@@ -33,3 +33,4 @@ python model_main.py --run_id $1  \
 				--device cuda \
 				--batch_size 200 \
 				--hrs 20
+				--niv 1
