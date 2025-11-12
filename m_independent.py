@@ -52,13 +52,16 @@ class ViscoelasticMaterialModel(nn.Module):
         energy_hidden_dim,
         dissipation_input_dim,
         dissipation_hidden_dim,
+        E_encoder=None,
+        nu_encoder=None,
+        dt=0.01,
     ):
         super(ViscoelasticMaterialModel, self).__init__()
         self.energy_function = EnergyFunction(energy_input_dim, energy_hidden_dim)
         self.dissipation_potential = InverseDissipationPotential(
             dissipation_input_dim, dissipation_hidden_dim
         )
-        self.dt = 0.01  # Time step size
+        self.dt = dt  # Time step size
 
     def forward(self, e, e_dot):
         stress = []
