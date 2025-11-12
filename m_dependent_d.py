@@ -97,7 +97,11 @@ class ViscoelasticMaterialModelM(nn.Module):
 
     def forward(self, e, e_dot, E, nu):
         stress = []
-        xi = [torch.zeros(e.shape[0], self.niv, requires_grad=True, device=e.device, dtype=e.dtype)]
+        xi = [
+            torch.zeros(
+                e.shape[0], self.niv, requires_grad=True, device=e.device, dtype=e.dtype
+            )
+        ]
         s_eq, d = self.compute_energy_derivative(e[:, 0], xi[0], E, nu)
         for i in range(1, e.shape[1]):
             s_neq, kinetics = self.compute_dissipation_derivative(
@@ -126,3 +130,9 @@ def train_step(model, optimizer, e, e_dot, E, nu, s_true):
     loss.backward()
     optimizer.step()
     return loss.item()
+
+
+def prediction_step(model, e, e_dot, E, nu):
+    model.eval()
+    s_pred, xi = model(e, e_dot, E, nu)
+    return s_pred, xi

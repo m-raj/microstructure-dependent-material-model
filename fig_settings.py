@@ -31,6 +31,7 @@ params = {
     "legend.frameon": False,
     "lines.markersize": 4.0,
     "axes.formatter.use_mathtext": True,
+    "figure.figsize": (4.5, 4),
 }
 
 plt.rcParams.update(params)
