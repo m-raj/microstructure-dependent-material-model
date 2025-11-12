@@ -1,7 +1,7 @@
 import pickle, torch, os, wandb
 from tqdm import tqdm
 import argparse
-from torch.utils.data import DataLoader 
+from torch.utils.data import DataLoader
 
 # Custom imports
 from util import LossFunction, ViscoelasticDataset
@@ -38,7 +38,8 @@ parser.add_argument(
     "--n_samples", type=int, default=10, help="Number of samples to use for training"
 )
 parser.add_argument(
-        "--batch_size", type=int, default=32, help="Batch size of the dataset")
+    "--batch_size", type=int, default=32, help="Batch size of the dataset"
+)
 
 args = parser.parse_args()
 
@@ -80,14 +81,20 @@ ae_E_loss_history = []
 
 num_epochs = args.epochs
 for epoch in tqdm(range(num_epochs)):
+    rel_error = 0.0
     for E_batch, _ in dataloader:
         loss = train_step(ae_E, ae_E_optimizer, E_batch)
         ae_E_loss_history.append(loss)
+        rel_error += loss_function.L2RelativeError(
+            ae_E(E_batch).unsqueeze(-1), E_batch.unsqueeze(-1), reduction="mean"
+        ).item()
+    rel_error /= len(trainset) / dataloader.batch_size
     run.log(
         {
             "E_Loss": loss,
             "E_epoch": epoch,
             "E_lr": ae_E_optimizer.param_groups[0]["lr"],
+            "E_Train_Relative_Error": rel_error,
         }
     )
 
@@ -106,16 +113,22 @@ ae_nu_optimizer = torch.optim.Adam(ae_nu.parameters(), lr=args.lr)
 ae_nu_loss_history = []
 
 for epoch in tqdm(range(num_epochs)):
+    rel_error = 0.0
     for _, nu_batch in dataloader:
         loss = train_step(ae_nu, ae_nu_optimizer, nu_batch)
         ae_nu_loss_history.append(loss)
-        run.log(
-            {
-                "nu_Loss": loss,
-                "nu_epoch": epoch,
-                "nu_lr": ae_nu_optimizer.param_groups[0]["lr"],
-            }
-        )
+    rel_error += loss_function.L2RelativeError(
+        ae_nu(nu_batch).unsqueeze(-1), nu_batch.unsqueeze(-1), reduction="mean"
+    ).item()
+    run.log(
+        {
+            "nu_Loss": loss,
+            "nu_epoch": epoch,
+            "nu_lr": ae_nu_optimizer.param_groups[0]["lr"],
+            "nu_Train_Relative_Error": rel_error,
+        }
+    )
+
     # Validation Step
     val_rel_error = 0.0
     for _, nu_batch in val_dataloader:
