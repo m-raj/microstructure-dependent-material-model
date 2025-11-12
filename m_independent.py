@@ -86,7 +86,7 @@ class ViscoelasticMaterialModel(nn.Module):
         return self.dissipation_potential.compute_derivative(p, q)
 
 
-def train_step(model, optimizer, e, e_dot, s_true):
+def train_step(model, optimizer, e, e_dot, E, nu, s_true):
     model.train()
     optimizer.zero_grad()
     s_pred, _ = model(e, e_dot)
