@@ -22,7 +22,7 @@ python encoder_main.py --run_id $1  \
 			   	--epochs 4000 \
 				--lr 1e-3 \
 				--hidden_dim 512 \
-				--latent_dim 15 \
+				--latent_dim $2 \
 				--step 50 \
 				--n_samples 1000 \
 				--device cpu
