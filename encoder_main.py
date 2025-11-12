@@ -67,6 +67,7 @@ dataset = ViscoelasticDataset(
 length = len(dataset)
 train_length, val_length = int(0.8 * length), length - int(0.8 * length)
 trainset, valset = torch.utils.data.random_split(dataset, [train_length, val_length])
+indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
 dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False)
 
@@ -147,6 +148,9 @@ if not os.path.exists(save_path):
 os.system("cp microstructure_encoder_main.py {0}/".format(save_path))
 os.system("cp m_encoder.py {0}/".format(save_path))
 os.system("cp util.py {0}/".format(save_path))
+
+# Save dataset
+torch.save(indices, "{0}/dataset_indices.pth".format(save_path))
 
 # Models
 torch.save(ae_E.state_dict(), "{0}/ae_E.pth".format(save_path))

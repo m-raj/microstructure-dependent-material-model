@@ -1,7 +1,7 @@
 import torch, argparse, wandb, os
 from tqdm import tqdm
 import importlib, time
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, Subset
 
 start_time = time.time()
 parser = argparse.ArgumentParser()
@@ -64,7 +64,7 @@ parser.add_argument(
     "--hrs", type=float, default=1.0, help="Maximum training time in hours"
 )
 
-parser.add_argument("--niv", type=int, default = 1, help="Number of internal variables")
+parser.add_argument("--niv", type=int, default=1, help="Number of internal variables")
 
 args = parser.parse_args()
 
@@ -92,6 +92,10 @@ dataset = ViscoelasticDataset(
 length = len(dataset)
 train_length, val_length = int(0.8 * length), length - int(0.8 * length)
 
+indices = torch.load(f"{args.encoder_path}/dataset_indices.pth")
+trainset = Subset(dataset, indices["train_indices"])
+valset = Subset(dataset, indices["val_indices"])
+
 trainset, valset = random_split(dataset, [train_length, val_length])
 indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
 dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
@@ -113,7 +117,11 @@ ae_nu.load_state_dict(torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=
 
 energy_input_dim = (1, args.niv, args.encoder_latent_dim * 2)
 energy_hidden_dim = args.hidden_dim
-dissipation_input_dim = (1, args.niv, args.encoder_latent_dim * 2)  # (p_dim, q_dim, m_dim)
+dissipation_input_dim = (
+    1,
+    args.niv,
+    args.encoder_latent_dim * 2,
+)  # (p_dim, q_dim, m_dim)
 dissipation_hidden_dim = args.hidden_dim
 
 ae_E.freeze_encoder()
@@ -126,7 +134,7 @@ vmm = mm.ViscoelasticMaterialModelM(
     dissipation_hidden_dim,
     ae_E.encoder,
     ae_nu.encoder,
-    dt = 1/args.step
+    dt=1 / args.step,
 ).to(device)
 optimizer = torch.optim.Adam(vmm.parameters(), lr=args.lr)
 loss_history = []
