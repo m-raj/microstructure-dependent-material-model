@@ -29,7 +29,7 @@ python model_main.py --run_id $1  \
 				--step 50 \
 				--n_samples 1000 \
 				--encoder_path encoder_run_1 \
-				--material_model m_dependent_b \
+				--material_model m_independent \
 				--device cuda \
 				--batch_size 200 \
 				--hrs 20
