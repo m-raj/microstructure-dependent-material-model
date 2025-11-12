@@ -57,6 +57,7 @@ class ViscoelasticMaterialModel(nn.Module):
         dt=0.01,
     ):
         super(ViscoelasticMaterialModel, self).__init__()
+        self.niv = energy_input_dim[1]
         energy_input_dim = energy_input_dim[0] + energy_input_dim[1]
         self.energy_function = EnergyFunction(energy_input_dim, energy_hidden_dim)
         dissipation_input_dim = dissipation_input_dim[0] + dissipation_input_dim[1]
