@@ -28,7 +28,7 @@ python model_main.py --run_id $1  \
 				--encoder_latent_dim 15 \
 				--step 50 \
 				--n_samples 1000 \
-				--encoder_path encoder_run_5 \
+				--encoder_path encoder_run_1 \
 				--material_model m_dependent_b \
 				--device cuda \
 				--batch_size 200 \
