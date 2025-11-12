@@ -58,6 +58,7 @@ dataset = ViscoelasticDataset(
     N=args.n_samples,
     step=args.step,
     device=device,
+    encoder=True,
 )
 length = len(dataset)
 train_length, val_length = int(0.8 * length), length - int(0.8 * length)
@@ -86,37 +87,40 @@ for epoch in tqdm(range(num_epochs)):
             "E_lr": ae_E_optimizer.param_groups[0]["lr"],
         }
     )
-    if (epoch + 1) % 100 == 0:
-        rel_error = loss_function.L2RelativeError(
-            ae_E(E).unsqueeze(-1), E.unsqueeze(-1), reduction="mean"
+
+    # Validation Step
+    val_rel_error = 0.0
+    for E_batch, _ in val_dataloader:
+        val_rel_error += loss_function.L2RelativeError(
+            ae_E(E_batch).unsqueeze(-1), E_batch.unsqueeze(-1), reduction="mean"
         ).item()
-        run.log({"E_Relative_Error": rel_error})
-        tqdm.write(
-            f"E Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
-        )
+    val_rel_error /= len(valset) / val_dataloader.batch_size
+    run.log({"E_Val_Relative_Error": val_rel_error})
+
 
 ae_nu = AutoEncoder(501, args.hidden_dim, args.latent_dim).to(device)
 ae_nu_optimizer = torch.optim.Adam(ae_nu.parameters(), lr=args.lr)
 ae_nu_loss_history = []
 
 for epoch in tqdm(range(num_epochs)):
-    loss = train_step(ae_nu, ae_nu_optimizer, nu)
-    ae_nu_loss_history.append(loss)
-    run.log(
-        {
-            "nu_Loss": loss,
-            "nu_epoch": epoch,
-            "nu_lr": ae_nu_optimizer.param_groups[0]["lr"],
-        }
-    )
-    if (epoch + 1) % 100 == 0:
-        rel_error = loss_function.L2RelativeError(
-            ae_nu(nu).unsqueeze(-1), nu.unsqueeze(-1), reduction="mean"
-        ).item()
-        run.log({"nu_Relative_Error": rel_error})
-        tqdm.write(
-            f"Nu Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
+    for _, nu_batch in dataloader:
+        loss = train_step(ae_nu, ae_nu_optimizer, nu_batch)
+        ae_nu_loss_history.append(loss)
+        run.log(
+            {
+                "nu_Loss": loss,
+                "nu_epoch": epoch,
+                "nu_lr": ae_nu_optimizer.param_groups[0]["lr"],
+            }
         )
+    # Validation Step
+    val_rel_error = 0.0
+    for _, nu_batch in val_dataloader:
+        val_rel_error += loss_function.L2RelativeError(
+            ae_nu(nu_batch).unsqueeze(-1), nu_batch.unsqueeze(-1), reduction="mean"
+        ).item()
+    val_rel_error /= len(valset) / val_dataloader.batch_size
+    run.log({"nu_Val_Relative_Error": val_rel_error})
 
 save_path = "encoder_run_{0}".format(args.run_id)
 if not os.path.exists(save_path):
