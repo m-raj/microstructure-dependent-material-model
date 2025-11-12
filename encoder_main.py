@@ -1,9 +1,10 @@
 import pickle, torch, os, wandb
 from tqdm import tqdm
 import argparse
+from torch.utils.data import DataLoader 
 
 # Custom imports
-from util import LossFunction, ViscoelasticDataset, DataLoader
+from util import LossFunction, ViscoelasticDataset
 from m_encoder import *
 
 
@@ -36,6 +37,8 @@ parser.add_argument(
 parser.add_argument(
     "--n_samples", type=int, default=10, help="Number of samples to use for training"
 )
+parser.add_argument(
+        "--batch_size", type=int, default=32, help="Batch size of the dataset")
 
 args = parser.parse_args()
 
@@ -63,8 +66,8 @@ dataset = ViscoelasticDataset(
 length = len(dataset)
 train_length, val_length = int(0.8 * length), length - int(0.8 * length)
 trainset, valset = torch.utils.data.random_split(dataset, [train_length, val_length])
-dataloader = DataLoader(dataset, batch_size=args.n_samples, shuffle=True)
-val_dataloader = DataLoader(valset, batch_size=args.n_samples, shuffle=False)
+dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False)
 
 with open(args.data_path, "rb") as f:
     data = pickle.load(f)
