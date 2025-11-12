@@ -89,15 +89,15 @@ run = wandb.init(
 dataset = ViscoelasticDataset(
     data_path=args.data_path, N=args.n_samples, step=args.step, device=args.device
 )
-length = len(dataset)
-train_length, val_length = int(0.8 * length), length - int(0.8 * length)
-
 indices = torch.load(f"{args.encoder_path}/dataset_indices.pth")
 trainset = Subset(dataset, indices["train_indices"])
 valset = Subset(dataset, indices["val_indices"])
 
-trainset, valset = random_split(dataset, [train_length, val_length])
-indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
+# length = len(dataset)
+# train_length, val_length = int(0.8 * length), length - int(0.8 * length)
+# trainset, valset = random_split(dataset, [train_length, val_length])
+# indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
+
 dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False)
 
