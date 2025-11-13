@@ -94,7 +94,7 @@ class ViscoelasticMaterialModel(nn.Module):
 def train_step(model, optimizer, e, e_dot, E, nu, s_true):
     model.train()
     optimizer.zero_grad()
-    s_pred, _ = model(e, e_dot)
+    s_pred, _ = model(e, e_dot, E, nu)
     loss = F.mse_loss(s_pred, s_true)
     loss.backward()
     optimizer.step()
