@@ -66,7 +66,7 @@ class ViscoelasticMaterialModel(nn.Module):
         )
         self.dt = dt  # Time step size
 
-    def forward(self, e, e_dot):
+    def forward(self, e, e_dot, E, nu):
         stress = []
         xi = [
             torch.zeros(
