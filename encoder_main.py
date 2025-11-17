@@ -68,7 +68,7 @@ length = len(dataset)
 train_length, val_length = int(0.8 * length), length - int(0.8 * length)
 trainset, valset = torch.utils.data.random_split(dataset, [train_length, val_length])
 indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
-dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+train_dataloader = DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
 val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False)
 
 with open(args.data_path, "rb") as f:
@@ -83,13 +83,13 @@ ae_E_loss_history = []
 num_epochs = args.epochs
 for epoch in tqdm(range(num_epochs)):
     rel_error = 0.0
-    for E_batch, _ in dataloader:
+    for E_batch, _ in train_dataloader:
         loss = train_step(ae_E, ae_E_optimizer, E_batch)
         ae_E_loss_history.append(loss)
         rel_error += loss_function.L2RelativeError(
             ae_E(E_batch).unsqueeze(-1), E_batch.unsqueeze(-1), reduction="mean"
         ).item()
-    rel_error /= len(trainset) / dataloader.batch_size
+    rel_error /= len(trainset) / train_dataloader.batch_size
     run.log(
         {
             "E_Loss": loss,
@@ -115,13 +115,13 @@ ae_nu_loss_history = []
 
 for epoch in tqdm(range(num_epochs)):
     rel_error = 0.0
-    for _, nu_batch in dataloader:
+    for _, nu_batch in train_dataloader:
         loss = train_step(ae_nu, ae_nu_optimizer, nu_batch)
         ae_nu_loss_history.append(loss)
         rel_error += loss_function.L2RelativeError(
             ae_nu(nu_batch).unsqueeze(-1), nu_batch.unsqueeze(-1), reduction="mean"
         ).item()
-    rel_error /= len(trainset) / dataloader.batch_size
+    rel_error /= len(trainset) / train_dataloader.batch_size
     run.log(
         {
             "nu_Loss": loss,
