@@ -9,10 +9,14 @@ class AutoEncoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, hidden_dims),
             nn.ReLU(),
+            nn.Linear(hidden_dims, hidden_dims),
+            nn.ReLU(),
             nn.Linear(hidden_dims, latent_dim),
         )
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dims),
+            nn.ReLU(),
+            nn.Linear(hidden_dims, hidden_dims),
             nn.ReLU(),
             nn.Linear(hidden_dims, input_dim),
             nn.Sigmoid(),
