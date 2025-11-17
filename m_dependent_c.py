@@ -5,29 +5,20 @@ from convex_network import *
 
 
 class EnergyFunctionM(nn.Module):
-    def __init__(self, input_dim, hidden_dim, E_encoder, nu_encoder):
+    def __init__(self, input_dim, hidden_dim):
         super(EnergyFunctionM, self).__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, 1)
 
-        # Microstructure encoder
-        self.E_encoder = E_encoder
-        self.nu_encoder = nu_encoder
-
-    def microstructure_encoder(self, E, nu):
-        x = torch.cat((self.E_encoder(E), self.nu_encoder(nu)), dim=-1)
-        return x
-
-    def forward(self, u, v, E, nu):
-        m_features = self.microstructure_encoder(E, nu)
+    def forward(self, u, v, m_features):
         x = torch.cat((u, v, m_features), dim=-1)
         x = torch.square(F.relu(self.fc1(x)))
         energy = self.fc2(x)
         return energy.squeeze(-1)
 
-    def compute_derivative(self, u, v, E, nu):
+    def compute_derivative(self, u, v, m_features):
         u.requires_grad_(True)
-        energy = self(u, v, E, nu)
+        energy = self(u, v, m_features)
         grad_u, grad_v = torch.autograd.grad(
             energy.sum(), (u, v), create_graph=True, retain_graph=True
         )
@@ -35,28 +26,20 @@ class EnergyFunctionM(nn.Module):
 
 
 class InverseDissipationPotentialM(nn.Module):
-    def __init__(self, y_dim, x_dim, hidden_dim, E_encoder, nu_encoder):
+    def __init__(self, y_dim, x_dim, hidden_dim):
         super(InverseDissipationPotentialM, self).__init__()
-
-        # Microstructure encoder
-        self.E_encoder = E_encoder
-        self.nu_encoder = nu_encoder
 
         self.picnn = PartiallyInputConvex(y_dim, x_dim, hidden_dim, hidden_dim)
 
-    def microstructure_encoder(self, E, nu):
-        x = torch.cat((self.E_encoder(E), self.nu_encoder(nu)), dim=-1)
-        return x
-
-    def forward(self, p, q, E, nu):
+    def forward(self, p, q, m_features):
         p.requires_grad_(True)
-        m_features = self.microstructure_encoder(E, nu)
+        m_features = self.microstructure_encoder(m_features)
         x = torch.cat((p, m_features), dim=-1)
         potential = self.picnn(q, x)
         return potential.squeeze(-1)
 
-    def compute_derivative(self, p, q, E, nu):
-        potential = self(p, q, E, nu)
+    def compute_derivative(self, p, q, m_features):
+        potential = self(p, q, m_features)
         grad_p, grad_q = torch.autograd.grad(
             potential.sum(), (p, q), create_graph=True, retain_graph=True
         )
@@ -88,27 +71,36 @@ class ViscoelasticMaterialModelM(nn.Module):
         self.dt = dt  # Time step size
         self.niv = energy_input_dim[1]
 
+        # Microstructure encoder
+        self.E_encoder = E_encoder
+        self.nu_encoder = nu_encoder
+
+    def microstructure_encoder(self, E, nu):
+        x = torch.cat((self.E_encoder(E), self.nu_encoder(nu)), dim=-1)
+        return x
+
     def forward(self, e, e_dot, E, nu):
         stress = []
+        m_features = self.microstructure_encoder(E, nu)
         xi = [torch.zeros_like(torch.zeros(e.shape[0], self.niv), requires_grad=True)]
-        s_eq, d = self.compute_energy_derivative(e[:, 0], xi[0], E, nu)
+        s_eq, d = self.compute_energy_derivative(e[:, 0], xi[0], m_features)
         for i in range(1, e.shape[1]):
             s_neq, kinetics = self.compute_dissipation_derivative(
-                e_dot[:, i - 1], -d, E, nu
+                e_dot[:, i - 1], -d, m_features
             )
             xi.append(xi[-1] + self.dt * kinetics)
             stress.append(s_eq - s_neq)
-            s_eq, d = self.compute_energy_derivative(e[:, i], xi[-1], E, nu)
+            s_eq, d = self.compute_energy_derivative(e[:, i], xi[-1], m_features)
         stress.append(s_eq - s_neq)
         stress = torch.stack(stress, dim=1)
         xi = torch.stack(xi, dim=1)
         return stress, xi
 
-    def compute_energy_derivative(self, u, v, E, nu):
-        return self.energy_function.compute_derivative(u, v, E, nu)
+    def compute_energy_derivative(self, u, v, m_features):
+        return self.energy_function.compute_derivative(u, v, m_features)
 
-    def compute_dissipation_derivative(self, p, q, E, nu):
-        return self.dissipation_potential.compute_derivative(p, q, E, nu)
+    def compute_dissipation_derivative(self, p, q, m_features):
+        return self.dissipation_potential.compute_derivative(p, q, m_features)
 
 
 def train_step(model, optimizer, e, e_dot, E, nu, s_true):
