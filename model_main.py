@@ -145,7 +145,7 @@ vmm = mm.ViscoelasticMaterialModel(
     dissipation_hidden_dim,
     ae_E.encoder,
     ae_nu.encoder,
-    dt=1 / args.step,
+    dt=args.step / 5000.0,
 ).to(device)
 optimizer = torch.optim.Adam(vmm.parameters(), lr=args.lr)
 loss_history = []
