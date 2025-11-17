@@ -57,7 +57,7 @@ run = wandb.init(
 )
 
 # Load a pickle file
-data_files = args.data_path.split(",")
+data_files = [file.strip() for file in args.data_path.split(",")]
 print(data_files)
 datasets = [
     ViscoelasticDataset(
