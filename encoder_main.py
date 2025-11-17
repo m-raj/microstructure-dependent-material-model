@@ -78,9 +78,6 @@ indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
 train_dataloader = DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
 val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False)
 
-with open(args.data_path, "rb") as f:
-    data = pickle.load(f)
-
 loss_function = LossFunction()
 
 ae_E = AutoEncoder(501, args.hidden_dim, args.latent_dim).to(device)
