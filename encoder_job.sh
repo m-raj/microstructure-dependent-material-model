@@ -20,11 +20,18 @@
 python encoder_main.py --run_id $1  \
                 --data_path "data/2024-10-13_PC1D_process10_data.pkl,\
 				data/2024-10-13_PC1D_process11_data.pkl,\
-				data/2024-10-13_PC1D_process12_data.pkl\
-				data/2024-10-13_PC1d_process13_data.pkl" \
+				data/2024-10-13_PC1D_process12_data.pkl,\
+				data/2024-10-13_PC1D_process13_data.pkl,
+				data/2024-10-13_PC1D_process14_data.pkl,
+				data/2024-10-13_PC1D_process15_data.pkl,
+				data/2024-10-13_PC1D_process16_data.pkl,
+				data/2024-10-13_PC1D_process17_data.pkl,
+				data/2024-10-13_PC1D_process18_data.pkl,
+				data/2024-10-13_PC1D_process2_data.pkl,
+				data/2024-10-13_PC1D_process1_data.pkl" \
 			   	--epochs 4000 \
 				--lr 1e-3 \
-				--hidden_dim 100 \
+				--hidden_dim 300 \
 				--latent_dim $2 \
 				--step 50 \
 				--batch_size 1000 \
