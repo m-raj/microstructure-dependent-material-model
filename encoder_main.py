@@ -118,9 +118,10 @@ for epoch in tqdm(range(num_epochs)):
     for _, nu_batch in dataloader:
         loss = train_step(ae_nu, ae_nu_optimizer, nu_batch)
         ae_nu_loss_history.append(loss)
-    rel_error += loss_function.L2RelativeError(
-        ae_nu(nu_batch).unsqueeze(-1), nu_batch.unsqueeze(-1), reduction="mean"
-    ).item()
+        rel_error += loss_function.L2RelativeError(
+            ae_nu(nu_batch).unsqueeze(-1), nu_batch.unsqueeze(-1), reduction="mean"
+        ).item()
+    rel_error /= len(trainset) / dataloader.batch_size
     run.log(
         {
             "nu_Loss": loss,
