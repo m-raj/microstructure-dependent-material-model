@@ -42,9 +42,7 @@ parser.add_argument(
 parser.add_argument(
     "--step", type=int, default=50, help="Step size for downsampling the data"
 )
-parser.add_argument(
-    "--n_samples", type=int, default=100, help="Number of samples to use for training"
-)
+
 parser.add_argument(
     "--encoder_path",
     type=str,
