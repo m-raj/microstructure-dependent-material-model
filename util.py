@@ -27,17 +27,17 @@ class LossFunction(torch.nn.Module):
 
 
 class ViscoelasticDataset(Dataset):
-    def __init__(self, data_path, N, step, device="cpu", encoder=False):
+    def __init__(self, data_path, step, device="cpu", encoder=False):
 
         with open(data_path, "rb") as f:
             data = pickle.load(f)
 
-        self.e = torch.tensor(data["strain"][:N, ::step], dtype=torch.float32)
-        self.e_dot = torch.tensor(data["strain_rate"][:N, ::step], dtype=torch.float32)
-        self.s = torch.tensor(data["stress"][:N, ::step], dtype=torch.float32)
+        self.e = torch.tensor(data["strain"][:, ::step], dtype=torch.float32)
+        self.e_dot = torch.tensor(data["strain_rate"][:, ::step], dtype=torch.float32)
+        self.s = torch.tensor(data["stress"][:, ::step], dtype=torch.float32)
 
-        self.E = torch.tensor(data["E"][:N], dtype=torch.float32)
-        self.nu = torch.tensor(data["nu"][:N], dtype=torch.float32)
+        self.E = torch.tensor(data["E"], dtype=torch.float32)
+        self.nu = torch.tensor(data["nu"], dtype=torch.float32)
 
         self.device = device
 

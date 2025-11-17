@@ -34,9 +34,7 @@ parser.add_argument(
 parser.add_argument(
     "--step", type=int, default=50, help="Step size for downsampling the data"
 )
-parser.add_argument(
-    "--n_samples", type=int, default=10, help="Number of samples to use for training"
-)
+
 parser.add_argument(
     "--batch_size", type=int, default=32, help="Batch size of the dataset"
 )
@@ -62,7 +60,6 @@ print(data_files)
 datasets = [
     ViscoelasticDataset(
         data_path=file,
-        N=args.n_samples,
         step=args.step,
         device=device,
         encoder=True,
