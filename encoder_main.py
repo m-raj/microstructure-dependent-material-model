@@ -1,7 +1,7 @@
 import pickle, torch, os, wandb
 from tqdm import tqdm
 import argparse
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 
 # Custom imports
 from util import LossFunction, ViscoelasticDataset
@@ -57,13 +57,18 @@ run = wandb.init(
 )
 
 # Load a pickle file
-dataset = ViscoelasticDataset(
-    data_path=args.data_path,
-    N=args.n_samples,
-    step=args.step,
-    device=device,
-    encoder=True,
-)
+data_files = args.data_path.split(",")
+datasets = [
+    ViscoelasticDataset(
+        data_path=file,
+        N=args.n_samples,
+        step=args.step,
+        device=device,
+        encoder=True,
+    )
+    for file in data_files
+]
+dataset = ConcatDataset(datasets)
 length = len(dataset)
 train_length, val_length = int(0.8 * length), length - int(0.8 * length)
 trainset, valset = torch.utils.data.random_split(dataset, [train_length, val_length])

@@ -28,6 +28,7 @@ class LossFunction(torch.nn.Module):
 
 class ViscoelasticDataset(Dataset):
     def __init__(self, data_path, N, step, device="cpu", encoder=False):
+
         with open(data_path, "rb") as f:
             data = pickle.load(f)
 
