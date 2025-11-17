@@ -15,9 +15,9 @@ class LossFunction(torch.nn.Module):
         "x : [B, T, D]"
         return torch.sqrt(self.L2NormSquared(x))
 
-    def L2RelativeError(self, x, y, reduction="mean"):
-        error = x - y
-        rel_error = self.L2Norm(error) / (self.L2Norm(y) + 1.0e-8)
+    def L2RelativeError(self, pred, true, reduction="mean"):
+        error = pred - true
+        rel_error = self.L2Norm(error) / (self.L2Norm(true) + 1.0e-8)
         if reduction == "mean":
             return torch.mean(rel_error)
         elif not (reduction):

@@ -1,7 +1,7 @@
 import torch, argparse, wandb, os
 from tqdm import tqdm
 import importlib, time
-from torch.utils.data import DataLoader, random_split, Subset
+from torch.utils.data import DataLoader, random_split, Subset, ConcatDataset
 
 start_time = time.time()
 parser = argparse.ArgumentParser()
@@ -85,21 +85,32 @@ run = wandb.init(
     name=args.run_id,
 )
 
+data_files = [file.strip() for file in args.data_path.split(",")]
+print(data_files)
 
-dataset = ViscoelasticDataset(
-    data_path=args.data_path, N=args.n_samples, step=args.step, device=args.device
-)
+datasets = [
+    ViscoelasticDataset(
+        data_path=file,
+        step=args.step,
+        device=device,
+        encoder=False,
+    )
+    for file in data_files
+]
+dataset = ConcatDataset(datasets)
+length = len(dataset)
+print(length)
 indices = torch.load(f"{args.encoder_path}/dataset_indices.pth")
 trainset = Subset(dataset, indices["train_indices"])
 valset = Subset(dataset, indices["val_indices"])
+train_dataloader = DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
+val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False)
+
 
 # length = len(dataset)
 # train_length, val_length = int(0.8 * length), length - int(0.8 * length)
 # trainset, valset = random_split(dataset, [train_length, val_length])
 # indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
-
-dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
-val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False)
 
 loss_function = LossFunction()
 
@@ -146,7 +157,7 @@ loss_history = []
 # wandb.watch(vmm, log="all", log_freq=10)
 epochs = args.epochs
 for epoch in tqdm(range(epochs)):
-    for batch_x, batch_y in dataloader:
+    for batch_x, batch_y in train_dataloader:
         # print("epoch:", epoch)
         loss = mm.train_step(vmm, optimizer, *batch_x, batch_y)
     loss_history.append(loss)
