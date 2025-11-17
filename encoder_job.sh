@@ -27,5 +27,5 @@ python encoder_main.py --run_id $1  \
 				--latent_dim $2 \
 				--step 50 \
 				--n_samples 1000 \
-				--batch_size 1000
+				--batch_size 1000 \
 				--device cpu
