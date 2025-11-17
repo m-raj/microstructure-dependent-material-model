@@ -18,9 +18,9 @@
 
 # Run the mpi job
 python encoder_main.py --run_id $1  \
-                --data_path data/2024-10-13_PC1D_process10_data.pkl,\
+                --data_path "data/2024-10-13_PC1D_process10_data.pkl,\
 				data/2024-10-13_PC1D_process11_data.pkl,\
-				data/2024-10-13_PC1D_process12_data.pkl \
+				data/2024-10-13_PC1D_process12_data.pkl" \
 			   	--epochs 4000 \
 				--lr 1e-3 \
 				--hidden_dim 100 \
