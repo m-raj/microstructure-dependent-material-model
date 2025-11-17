@@ -58,6 +58,7 @@ run = wandb.init(
 
 # Load a pickle file
 data_files = args.data_path.split(",")
+print(data_files)
 datasets = [
     ViscoelasticDataset(
         data_path=file,
@@ -70,6 +71,7 @@ datasets = [
 ]
 dataset = ConcatDataset(datasets)
 length = len(dataset)
+print(length)
 train_length, val_length = int(0.8 * length), length - int(0.8 * length)
 trainset, valset = torch.utils.data.random_split(dataset, [train_length, val_length])
 indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
