@@ -44,6 +44,32 @@ class AutoEncoder(nn.Module):
             param.requires_grad = True
 
 
+class PCAEncoder(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super(PCAEncoder, self).__init__()
+        self.encoder = nn.Linear(input_dim, latent_dim, bias=True)
+
+    def initialize_weights(self, components, mean):
+        self.encoder.weight.data = components
+        self.encoder.bias.data = -mean @ components.t()
+
+    def decoder(self, z):
+        return (z - self.encoder.bias.data) @ self.encoder.weight.data
+
+    def forward(self, x):
+        print("done")
+        latent = self.encoder(x)
+        return latent
+
+    def freeze_encoder(self):
+        for param in self.encoder.parameters():
+            param.requires_grad = False
+
+    def unfreeze_encoder(self):
+        for param in self.encoder.parameters():
+            param.requires_grad = True
+
+
 def train_step(model, optimizer, data):
     model.train()
     optimizer.zero_grad()
