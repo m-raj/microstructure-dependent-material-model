@@ -39,6 +39,6 @@ python model_main.py --run_id $1  \
 				--encoder_path encoder_run_1d \
 				--material_model m_dependent_b \
 				--device cuda \
-				--batch_size 2000 \
+				--batch_size 5000 \
 				--hrs 20\
 				--niv 1
