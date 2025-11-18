@@ -45,19 +45,25 @@ class AutoEncoder(nn.Module):
 
 
 class PCAEncoder(nn.Module):
-    def __init__(self, input_dim, latent_dim):
+    def __init__(
+        self, input_dim, latent_dim, components=None, mean=None, data_files=None
+    ):
         super(PCAEncoder, self).__init__()
-        self.encoder = nn.Linear(input_dim, latent_dim, bias=True)
+        self.encoder = nn.Linear(input_dim, latent_dim)
+        self.components = components
+        self.mean = mean
+        self.data_files = data_files
+        self.initialize_weights(latent_dim)
 
-    def initialize_weights(self, components, mean):
+    def initialize_weights(self, latent_dim):
+        components = self.components[:latent_dim]
         self.encoder.weight.data = components
-        self.encoder.bias.data = -mean @ components.t()
+        self.encoder.bias.data = -self.mean @ components.t()
 
     def decoder(self, z):
         return (z - self.encoder.bias.data) @ self.encoder.weight.data
 
     def forward(self, x):
-        print("done")
         latent = self.encoder(x)
         return latent
 
