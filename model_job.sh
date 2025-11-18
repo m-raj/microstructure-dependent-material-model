@@ -34,11 +34,11 @@ python model_main.py --run_id $1  \
 				--lr 1e-3 \
 				--hidden_dim 300 \
 				--encoder_hidden_dim 200 \
-				--encoder_latent_dim 30 \
+				--encoder_latent_dim 15 \
 				--step 50 \
 				--encoder_path encoder_run_1d \
 				--material_model m_dependent_b \
 				--device cuda \
-				--batch_size 1000 \
-				--hrs 20
+				--batch_size 2000 \
+				--hrs 20\
 				--niv 1

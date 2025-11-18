@@ -98,17 +98,17 @@ datasets = [
 dataset = ConcatDataset(datasets)
 length = len(dataset)
 print(length)
-indices = torch.load(f"{args.encoder_path}/dataset_indices.pth")
-trainset = Subset(dataset, indices["train_indices"])
-valset = Subset(dataset, indices["val_indices"])
+#indices = torch.load(f"{args.encoder_path}/dataset_indices.pth")
+#trainset = Subset(dataset, indices["train_indices"])
+#valset = Subset(dataset, indices["val_indices"])
+
+# length = len(dataset)
+train_length, val_length = int(0.8 * length), length - int(0.8 * length)
+trainset, valset = random_split(dataset, [train_length, val_length])
+indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
 train_dataloader = DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
 val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False)
 
-
-# length = len(dataset)
-# train_length, val_length = int(0.8 * length), length - int(0.8 * length)
-# trainset, valset = random_split(dataset, [train_length, val_length])
-# indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
 
 loss_function = LossFunction()
 
