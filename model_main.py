@@ -98,9 +98,9 @@ datasets = [
 dataset = ConcatDataset(datasets)
 length = len(dataset)
 print(length)
-#indices = torch.load(f"{args.encoder_path}/dataset_indices.pth")
-#trainset = Subset(dataset, indices["train_indices"])
-#valset = Subset(dataset, indices["val_indices"])
+# indices = torch.load(f"{args.encoder_path}/dataset_indices.pth")
+# trainset = Subset(dataset, indices["train_indices"])
+# valset = Subset(dataset, indices["val_indices"])
 
 # length = len(dataset)
 train_length, val_length = int(0.8 * length), length - int(0.8 * length)
@@ -146,7 +146,6 @@ vmm = mm.ViscoelasticMaterialModel(
     dt=args.step / 5000.0,
 ).to(device)
 optimizer = torch.optim.Adam(vmm.parameters(), lr=args.lr)
-loss_history = []
 
 # continue_training_script
 # vmm.load_state_dict(torch.load("material_model_run_d5/vmm.pth"))
@@ -155,15 +154,14 @@ loss_history = []
 # wandb.watch(vmm, log="all", log_freq=10)
 epochs = args.epochs
 for epoch in tqdm(range(epochs)):
+    rel_error = 0.0
     for batch_x, batch_y in train_dataloader:
         # print("epoch:", epoch)
         loss = mm.train_step(vmm, optimizer, *batch_x, batch_y)
-    loss_history.append(loss)
-    wandb.log({"loss": loss, "epoch": epoch, "lr": optimizer.param_groups[0]["lr"]})
-    rel_error = loss_function.L2RelativeError(
-        vmm(*batch_x)[0], batch_y, reduction="mean"
-    ).item()
-    wandb.log({"Relative_Error": rel_error})
+        rel_error += loss_function.L2RelativeError(
+            vmm(*batch_x)[0], batch_y, reduction="mean"
+        ).item()
+    rel_error /= len(trainset) / train_dataloader.batch_size
     tqdm.write(
         f"Epoch [{epoch+1}/{epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
     )
@@ -175,7 +173,15 @@ for epoch in tqdm(range(epochs)):
             vmm(*val_batch_x)[0], val_batch_y, reduction="mean"
         ).item()
     val_rel_error /= len(valset) / val_dataloader.batch_size
-    wandb.log({"val_Relative_Error": val_rel_error})
+    wandb.log(
+        {
+            "loss": loss,
+            "epoch": epoch,
+            "lr": optimizer.param_groups[0]["lr"],
+            "Relative_Error": rel_error,
+            "val_Relative_Error": val_rel_error,
+        }
+    )
 
     curr_time = time.time()
     time_diff = (curr_time - start_time) / 60.0

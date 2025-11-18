@@ -91,14 +91,6 @@ for epoch in tqdm(range(num_epochs)):
             ae_E(E_batch).unsqueeze(-1), E_batch.unsqueeze(-1), reduction="mean"
         ).item()
     rel_error /= len(trainset) / train_dataloader.batch_size
-    run.log(
-        {
-            "E_Loss": loss,
-            "E_epoch": epoch,
-            "E_lr": ae_E_optimizer.param_groups[0]["lr"],
-            "E_Train_Relative_Error": rel_error,
-        }
-    )
 
     # Validation Step
     val_rel_error = 0.0
@@ -107,8 +99,16 @@ for epoch in tqdm(range(num_epochs)):
             ae_E(E_batch).unsqueeze(-1), E_batch.unsqueeze(-1), reduction="mean"
         ).item()
     val_rel_error /= len(valset) / val_dataloader.batch_size
-    run.log({"E_Val_Relative_Error": val_rel_error})
 
+    run.log(
+        {
+            "E_Loss": loss,
+            "E_epoch": epoch,
+            "E_lr": ae_E_optimizer.param_groups[0]["lr"],
+            "E_Train_Relative_Error": rel_error,
+            "E_Val_Relative_Error": val_rel_error,
+        }
+    )
 
 ae_nu = AutoEncoder(501, args.hidden_dim, args.latent_dim).to(device)
 ae_nu_optimizer = torch.optim.Adam(ae_nu.parameters(), lr=args.lr)
