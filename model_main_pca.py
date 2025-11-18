@@ -35,7 +35,7 @@ parser.add_argument(
 parser.add_argument(
     "--encoder_latent_dim",
     type=int,
-    default=10,
+    default=15,
     help="Latent dimension for the autoencoder",
 )
 
@@ -76,7 +76,7 @@ run = wandb.init(
     # Set the wandb entity where your project will be logged (generally your team name).
     entity="sci-ai",
     # Set the wandb project where this run will be logged.
-    project="microstructure-dependent-potential-learning",
+    project="PCA",
     # Track hyperparameters and run metadata.
     config=args.__dict__,
     # Name of the run
@@ -98,9 +98,9 @@ datasets = [
 dataset = ConcatDataset(datasets)
 length = len(dataset)
 print(length)
-#indices = torch.load(f"{args.encoder_path}/dataset_indices.pth")
-#trainset = Subset(dataset, indices["train_indices"])
-#valset = Subset(dataset, indices["val_indices"])
+# indices = torch.load(f"{args.encoder_path}/dataset_indices.pth")
+# trainset = Subset(dataset, indices["train_indices"])
+# valset = Subset(dataset, indices["val_indices"])
 
 # length = len(dataset)
 train_length, val_length = int(0.8 * length), length - int(0.8 * length)
@@ -114,15 +114,14 @@ loss_function = LossFunction()
 
 encoder_input_dim = 501
 
-ae_E = AutoEncoder(
-    encoder_input_dim, args.encoder_hidden_dim, args.encoder_latent_dim
-).to(device)
-ae_nu = AutoEncoder(
-    encoder_input_dim, args.encoder_hidden_dim, args.encoder_latent_dim
-).to(device)
+ae_E = torch.load("pca_encoder_1/ae_E.pth")
+ae_nu = torch.load("pca_encoder_1/ae_nu.pth")
+print(args.encoder_latent_dim)
+ae_E.initialize_weights(args.encoder_latent_dim)
+ae_nu.initialize_weights(args.encoder_latent_dim)
 
-ae_E.load_state_dict(torch.load(f"{args.encoder_path}/ae_E.pth", weights_only=True))
-ae_nu.load_state_dict(torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=True))
+# ae_E.load_state_dict(torch.load(f"{args.encoder_path}/ae_E.pth", weights_only=True))
+# ae_nu.load_state_dict(torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=True))
 
 energy_input_dim = (1, args.niv, args.encoder_latent_dim * 2)
 energy_hidden_dim = args.hidden_dim
