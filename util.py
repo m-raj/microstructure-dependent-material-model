@@ -20,6 +20,8 @@ class LossFunction(torch.nn.Module):
         rel_error = self.L2Norm(error) / (self.L2Norm(true) + 1.0e-8)
         if reduction == "mean":
             return torch.mean(rel_error)
+        if reduction == "sum":
+            return torch.sum(rel_error)
         elif not (reduction):
             return rel_error
         else:

@@ -159,9 +159,9 @@ for epoch in tqdm(range(epochs)):
         # print("epoch:", epoch)
         loss = mm.train_step(vmm, optimizer, *batch_x, batch_y)
         rel_error += loss_function.L2RelativeError(
-            vmm(*batch_x)[0], batch_y, reduction="mean"
+            vmm(*batch_x)[0], batch_y, reduction="sum"
         ).item()
-    rel_error /= len(trainset) / train_dataloader.batch_size
+    rel_error /= len(trainset)
     tqdm.write(
         f"Epoch [{epoch+1}/{epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
     )
@@ -170,9 +170,9 @@ for epoch in tqdm(range(epochs)):
     val_rel_error = 0.0
     for val_batch_x, val_batch_y in val_dataloader:
         val_rel_error += loss_function.L2RelativeError(
-            vmm(*val_batch_x)[0], val_batch_y, reduction="mean"
+            vmm(*val_batch_x)[0], val_batch_y, reduction="sum"
         ).item()
-    val_rel_error /= len(valset) / val_dataloader.batch_size
+    val_rel_error /= len(valset) 
     wandb.log(
         {
             "loss": loss,
@@ -199,6 +199,7 @@ torch.save(vmm.state_dict(), "{0}/vmm.pth".format(save_path))
 torch.save(args.__dict__ | indices, "{0}/args.pkl".format(save_path))
 torch.save(optimizer.state_dict(), "{0}/optimizer.pth".format(save_path))
 
-os.system("cp main.py {0}/".format(save_path))
-os.system("cp m_dependent_b.py {0}/".format(save_path))
-os.system("cp m_encoder.py {0}/".format(save_path))
+os.system("cp *.py {0}/".format(save_path))
+# os.system("cp m_dependent_b.py {0}/".format(save_path))
+# os.system("cp m_encoder.py {0}/".format(save_path))
+# os.system("cp model_main.py {0}/".format(save_path))

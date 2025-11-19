@@ -57,6 +57,40 @@ test_nu_samples = nu_samples[train_size:]
 pca_E.fit(train_E_samples)
 pca_nu.fit(train_nu_samples)
 
+E_recon = (
+    np.cumsum(
+        np.einsum("ji,bj->bji", pca_E.components_, pca_E.transform(test_E_samples)),
+        axis=1,
+    )
+    + pca_E.mean_
+)
+nu_recon = (
+    np.cumsum(
+        np.einsum("ji,bj->bji", pca_nu.components_, pca_nu.transform(test_nu_samples)),
+        axis=1,
+    )
+    + pca_nu.mean_
+)
+
+rel_error_E = np.asarray(
+    [
+        loss_function.L2RelativeError(
+            torch.tensor(E_recon[:, i]).unsqueeze(-1),
+            torch.tensor(test_E_samples).unsqueeze(-1),
+        ).numpy()
+        for i in range(pca_E.n_components_)
+    ]
+)
+rel_error_nu = np.asarray(
+    [
+        loss_function.L2RelativeError(
+            torch.tensor(nu_recon[:, i]).unsqueeze(-1),
+            torch.tensor(test_nu_samples).unsqueeze(-1),
+        ).numpy()
+        for i in range(pca_nu.n_components_)
+    ]
+)
+
 E_encoder = PCAEncoder(
     501,
     n_features,
@@ -105,5 +139,7 @@ print(f"PCA nu Test Relative Error: {rel_error_test}")
 
 if not os.path.exists(folder):
     os.makedirs(folder)
-torch.save(E_encoder, os.path.join(folder, "ae_E_encoder.pth"))
-torch.save(nu_Encoder, os.path.join(folder, "ae_nu_encoder.pth"))
+torch.save(E_encoder, os.path.join(folder, "ae_E.pth"))
+torch.save(nu_Encoder, os.path.join(folder, "ae_nu.pth"))
+torch.save(rel_error_E, os.path.join(folder, "rel_error_E_test.pth"))
+torch.save(rel_error_nu, os.path.join(folder, "pca_error_nu_test.pth"))

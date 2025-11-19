@@ -73,32 +73,33 @@ train_length, val_length = int(0.8 * length), length - int(0.8 * length)
 trainset, valset = torch.utils.data.random_split(dataset, [train_length, val_length])
 indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
 train_dataloader = DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
-val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False)
-
+val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=True)
+#print(len(dataset), len(trainset), len(valset))
+#print(len(train_dataloader),len(val_dataloader))i
 loss_function = LossFunction()
 
 ae_E = AutoEncoder(501, args.hidden_dim, args.latent_dim).to(device)
 ae_E_optimizer = torch.optim.Adam(ae_E.parameters(), lr=args.lr)
-ae_E_loss_history = []
 
 num_epochs = args.epochs
 for epoch in tqdm(range(num_epochs)):
     rel_error = 0.0
     for E_batch, _ in train_dataloader:
         loss = train_step(ae_E, ae_E_optimizer, E_batch)
-        ae_E_loss_history.append(loss)
         rel_error += loss_function.L2RelativeError(
-            ae_E(E_batch).unsqueeze(-1), E_batch.unsqueeze(-1), reduction="mean"
+            ae_E(E_batch).unsqueeze(-1), E_batch.unsqueeze(-1), reduction="sum"
         ).item()
-    rel_error /= len(trainset) / train_dataloader.batch_size
+#    print(rel_error, len(trainset), train_dataloader.batch_size)
+    rel_error /= len(trainset)
 
     # Validation Step
     val_rel_error = 0.0
     for E_batch, _ in val_dataloader:
         val_rel_error += loss_function.L2RelativeError(
-            ae_E(E_batch).unsqueeze(-1), E_batch.unsqueeze(-1), reduction="mean"
+            ae_E(E_batch).unsqueeze(-1), E_batch.unsqueeze(-1), reduction="sum"
         ).item()
-    val_rel_error /= len(valset) / val_dataloader.batch_size
+#    print(val_rel_error, len(valset), val_dataloader.batch_size)
+    val_rel_error /= len(valset)
 
     run.log(
         {
@@ -112,34 +113,32 @@ for epoch in tqdm(range(num_epochs)):
 
 ae_nu = AutoEncoder(501, args.hidden_dim, args.latent_dim).to(device)
 ae_nu_optimizer = torch.optim.Adam(ae_nu.parameters(), lr=args.lr)
-ae_nu_loss_history = []
 
 for epoch in tqdm(range(num_epochs)):
     rel_error = 0.0
     for _, nu_batch in train_dataloader:
         loss = train_step(ae_nu, ae_nu_optimizer, nu_batch)
-        ae_nu_loss_history.append(loss)
         rel_error += loss_function.L2RelativeError(
-            ae_nu(nu_batch).unsqueeze(-1), nu_batch.unsqueeze(-1), reduction="mean"
+            ae_nu(nu_batch).unsqueeze(-1), nu_batch.unsqueeze(-1), reduction="sum"
         ).item()
-    rel_error /= len(trainset) / train_dataloader.batch_size
+    rel_error /= len(trainset)
+
+    # Validation Step
+    val_rel_error = 0.0
+    for _, nu_batch in val_dataloader:
+        val_rel_error += loss_function.L2RelativeError(
+            ae_nu(nu_batch).unsqueeze(-1), nu_batch.unsqueeze(-1), reduction="sum"
+        ).item()
+    val_rel_error /= len(valset) 
     run.log(
         {
             "nu_Loss": loss,
             "nu_epoch": epoch,
             "nu_lr": ae_nu_optimizer.param_groups[0]["lr"],
             "nu_Train_Relative_Error": rel_error,
+            "nu_Val_Relative_error": val_rel_error
         }
     )
-
-    # Validation Step
-    val_rel_error = 0.0
-    for _, nu_batch in val_dataloader:
-        val_rel_error += loss_function.L2RelativeError(
-            ae_nu(nu_batch).unsqueeze(-1), nu_batch.unsqueeze(-1), reduction="mean"
-        ).item()
-    val_rel_error /= len(valset) / val_dataloader.batch_size
-    run.log({"nu_Val_Relative_Error": val_rel_error})
 
 save_path = "encoder_run_{0}".format(args.run_id)
 if not os.path.exists(save_path):
