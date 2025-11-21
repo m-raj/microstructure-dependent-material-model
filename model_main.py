@@ -133,8 +133,8 @@ dissipation_input_dim = (
 )  # (p_dim, q_dim, m_dim)
 dissipation_hidden_dim = args.hidden_dim
 
-# ae_E.freeze_encoder()
-# ae_nu.freeze_encoder()
+ae_E.freeze_encoder()
+ae_nu.freeze_encoder()
 
 vmm = mm.ViscoelasticMaterialModel(
     energy_input_dim,
@@ -184,22 +184,20 @@ for epoch in tqdm(range(epochs)):
     )
 
     curr_time = time.time()
-    time_diff = (curr_time - start_time) / 60.0
-    if time_diff > args.hrs * 60 - 20:
-        break
+    time_diff = (curr_time - start_time) // 3600
+    checkpoint = 0
+    if time_diff == checkpoint:
+        checkpoint+=1
 
 
-save_path = "material_model_run_{0}".format(args.run_id)
+        save_path = "material_model_run_{0}".format(args.run_id)
 
-if not os.path.exists(save_path):
-    os.makedirs(save_path)
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
 
-torch.save(vmm.state_dict(), "{0}/vmm.pth".format(save_path))
-torch.save(args.__dict__ | indices, "{0}/args.pkl".format(save_path))
-torch.save(optimizer.state_dict(), "{0}/optimizer.pth".format(save_path))
+        torch.save(vmm.state_dict(), "{0}/vmm.pth".format(save_path))
+        torch.save(args.__dict__ | indices, "{0}/args.pkl".format(save_path))
+        torch.save(optimizer.state_dict(), "{0}/optimizer.pth".format(save_path))
+        os.system("cp *.py {0}/".format(save_path))
 
-os.system("cp *.py {0}/".format(save_path))
-# os.system("cp m_dependent_b.py {0}/".format(save_path))
-# os.system("cp m_encoder.py {0}/".format(save_path))
-# os.system("cp model_main.py {0}/".format(save_path))

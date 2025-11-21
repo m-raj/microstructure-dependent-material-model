@@ -58,11 +58,11 @@ class ViscoelasticMaterialModel(nn.Module):
     ):
         super(ViscoelasticMaterialModel, self).__init__()
         self.niv = energy_input_dim[1]
-        self.energy_function = EnergyFunction(
-            sum(energy_input_dim), energy_hidden_dim)
+        self.energy_function = EnergyFunction(sum(energy_input_dim), energy_hidden_dim)
         dissipation_input_dim = sum(dissipation_input_dim)
         self.dissipation_potential = InverseDissipationPotential(
-            dissipation_input_dim, dissipation_hidden_dim)
+            dissipation_input_dim, dissipation_hidden_dim
+        )
         self.dt = dt  # Time step size
 
         # Microstructure encoder
@@ -81,15 +81,16 @@ class ViscoelasticMaterialModel(nn.Module):
                 e.shape[0], self.niv, requires_grad=True, dtype=e.dtype, device=e.device
             )
         ]
-        s_eq, d = self.compute_energy_derivative(e[:, 0], xi[0], m_features)
-        for i in range(1, e.shape[1]):
+        for i in range(0, e.shape[1]):
+            s_eq, d = self.compute_energy_derivative(e[:, i], xi[i], m_features)
             s_neq, kinetics = self.compute_dissipation_derivative(
                 e_dot[:, i - 1], -d, m_features
             )
-            xi.append(xi[-1] + self.dt * kinetics)
+            if i < e.shape[1] - 1:
+                xi.append(xi[-1] + self.dt * kinetics)
             stress.append(s_eq - s_neq)
-            s_eq, d = self.compute_energy_derivative(e[:, i], xi[-1], m_features)
-        stress.append(s_eq - s_neq)
+            # s_eq, d = self.compute_energy_derivative(e[:, i], xi[-1], m_features)
+        # stress.append(s_eq - s_neq)
         stress = torch.stack(stress, dim=1)
         xi = torch.stack(xi, dim=1)
         return stress, xi
