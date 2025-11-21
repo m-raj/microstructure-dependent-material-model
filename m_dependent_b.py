@@ -84,13 +84,11 @@ class ViscoelasticMaterialModel(nn.Module):
         for i in range(0, e.shape[1]):
             s_eq, d = self.compute_energy_derivative(e[:, i], xi[i], m_features)
             s_neq, kinetics = self.compute_dissipation_derivative(
-                e_dot[:, i - 1], -d, m_features
+                e_dot[:, i], -d, m_features
             )
+            stress.append(s_eq - s_neq)
             if i < e.shape[1] - 1:
                 xi.append(xi[-1] + self.dt * kinetics)
-            stress.append(s_eq - s_neq)
-            # s_eq, d = self.compute_energy_derivative(e[:, i], xi[-1], m_features)
-        # stress.append(s_eq - s_neq)
         stress = torch.stack(stress, dim=1)
         xi = torch.stack(xi, dim=1)
         return stress, xi

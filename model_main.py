@@ -133,8 +133,8 @@ dissipation_input_dim = (
 )  # (p_dim, q_dim, m_dim)
 dissipation_hidden_dim = args.hidden_dim
 
-ae_E.freeze_encoder()
-ae_nu.freeze_encoder()
+# ae_E.freeze_encoder()
+# ae_nu.freeze_encoder()
 
 vmm = mm.ViscoelasticMaterialModel(
     energy_input_dim,
@@ -172,7 +172,7 @@ for epoch in tqdm(range(epochs)):
         val_rel_error += loss_function.L2RelativeError(
             vmm(*val_batch_x)[0], val_batch_y, reduction="sum"
         ).item()
-    val_rel_error /= len(valset) 
+    val_rel_error /= len(valset)
     wandb.log(
         {
             "loss": loss,
@@ -187,17 +187,14 @@ for epoch in tqdm(range(epochs)):
     time_diff = (curr_time - start_time) // 3600
     checkpoint = 0
     if time_diff == checkpoint:
-        checkpoint+=1
-
+        checkpoint += 1
 
         save_path = "material_model_run_{0}".format(args.run_id)
 
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
-
         torch.save(vmm.state_dict(), "{0}/vmm.pth".format(save_path))
         torch.save(args.__dict__ | indices, "{0}/args.pkl".format(save_path))
         torch.save(optimizer.state_dict(), "{0}/optimizer.pth".format(save_path))
         os.system("cp *.py {0}/".format(save_path))
-
