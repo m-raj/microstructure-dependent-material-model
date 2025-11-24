@@ -54,7 +54,6 @@ class ViscoelasticMaterialModel(nn.Module):
 
         self.dissipation_potential = InverseDissipationPotential(
             sdim * 2 + niv + mdim,
-            energy_hidden_dim,
             dissipation_hidden_dim,
             niv,
         )
