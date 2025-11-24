@@ -7,21 +7,13 @@ class EnergyFunction(nn.Module):
     def __init__(self, input_dim, hidden_dim):
         super(EnergyFunction, self).__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, 1)
+        self.fc2 = nn.Linear(hidden_dim, 2)
 
     def forward(self, u, v, m_features):
         x = torch.cat((u, v, m_features), dim=-1)
         x = torch.square(F.relu(self.fc1(x)))
         energy = self.fc2(x)
         return energy.squeeze(-1)
-
-    def compute_derivative(self, u, v, m_features):
-        u.requires_grad_(True)
-        energy = self(u, v, m_features)
-        grad_u, grad_v = torch.autograd.grad(
-            energy.sum(), (u, v), create_graph=True, retain_graph=True
-        )
-        return grad_u, grad_v
 
 
 class InverseDissipationPotential(nn.Module):
