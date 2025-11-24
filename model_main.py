@@ -170,7 +170,9 @@ for epoch in tqdm(range(epochs)):
     val_rel_error = 0.0
     val_loss = 0.0
     for val_batch_x, val_batch_y in val_dataloader:
-        val_loss += F.mse_loss(vmm(*val_batch_x), val_batch_y, reduction="sum").item()
+        val_loss += F.mse_loss(
+            vmm(*val_batch_x)[0], val_batch_y, reduction="sum"
+        ).item()
         val_rel_error += loss_function.L2RelativeError(
             vmm(*val_batch_x)[0], val_batch_y, reduction="sum"
         ).item()
