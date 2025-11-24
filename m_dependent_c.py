@@ -80,7 +80,11 @@ class ViscoelasticMaterialModel(nn.Module):
     def forward(self, e, e_dot, E, nu):
         stress = []
         m_features = self.microstructure_encoder(E, nu)
-        xi = [torch.zeros_like(torch.zeros(e.shape[0], self.niv), requires_grad=True)]
+        xi = [
+            torch.zeros(
+                e.shape[0], self.niv, requires_grad=True, dtype=e.dtype, device=e.device
+            )
+        ]
         s_eq, d = self.compute_energy_derivative(e[:, 0], xi[0], m_features)
         for i in range(1, e.shape[1]):
             s_neq, kinetics = self.compute_dissipation_derivative(
