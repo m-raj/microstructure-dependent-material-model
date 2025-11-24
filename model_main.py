@@ -2,6 +2,7 @@ import torch, argparse, wandb, os
 from tqdm import tqdm
 import importlib, time
 from torch.utils.data import DataLoader, random_split, Subset, ConcatDataset
+from torch.optim import lr_scheduler
 
 start_time = time.time()
 parser = argparse.ArgumentParser()
@@ -146,6 +147,9 @@ vmm = mm.ViscoelasticMaterialModel(
     dt=args.step / 5000.0,
 ).to(device)
 optimizer = torch.optim.Adam(vmm.parameters(), lr=args.lr)
+schduler = lr_scheduler.ReduceLROnPlateau(
+    optimizer, mode="min", factor=0.5, patience=20
+)
 
 # continue_training_script
 # vmm.load_state_dict(torch.load("material_model_run_z7/vmm.pth"))
@@ -169,11 +173,15 @@ for epoch in tqdm(range(epochs)):
 
     # Validation step
     val_rel_error = 0.0
+    val_loss = 0.0
     for val_batch_x, val_batch_y in val_dataloader:
+        val_loss += F.mse_loss(vmm(*val_batch_x), val_batch_y, reduction="sum").item()
         val_rel_error += loss_function.L2RelativeError(
             vmm(*val_batch_x)[0], val_batch_y, reduction="sum"
         ).item()
+    val_loss /= len(valset)
     val_rel_error /= len(valset)
+    schduler.step(val_loss)
     wandb.log(
         {
             "loss": loss,
@@ -181,6 +189,7 @@ for epoch in tqdm(range(epochs)):
             "lr": optimizer.param_groups[0]["lr"],
             "Relative_Error": rel_error,
             "val_Relative_Error": val_rel_error,
+            "val_loss": val_loss,
         }
     )
 
