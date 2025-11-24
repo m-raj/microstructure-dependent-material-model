@@ -10,6 +10,7 @@ class EnergyFunction(nn.Module):
         self.fc2 = nn.Linear(hidden_dim, 1)
 
     def forward(self, u, u_dot, v, m_features):
+        print(u.shape, u_dot.shape, v.shape, m_features.shape)
         x = torch.cat((u, u_dot, v, m_features), dim=-1)
         x = F.relu(self.fc1(x))
         energy = self.fc2(x)
