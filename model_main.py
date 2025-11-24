@@ -96,13 +96,13 @@ datasets = [
     for file in data_files
 ]
 dataset = ConcatDataset(datasets)
-length = len(dataset)
-print(length)
-# indices = torch.load(f"{args.encoder_path}/dataset_indices.pth")
+# length = len(dataset)
+# print(length)
+# indices = torch.load(f"{args.indices}/dataset_indices.pth")
 # trainset = Subset(dataset, indices["train_indices"])
 # valset = Subset(dataset, indices["val_indices"])
 
-# length = len(dataset)
+length = len(dataset)
 train_length, val_length = int(0.8 * length), length - int(0.8 * length)
 trainset, valset = random_split(dataset, [train_length, val_length])
 indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
@@ -133,8 +133,8 @@ dissipation_input_dim = (
 )  # (p_dim, q_dim, m_dim)
 dissipation_hidden_dim = args.hidden_dim
 
-# ae_E.freeze_encoder()
-# ae_nu.freeze_encoder()
+ae_E.freeze_encoder()
+ae_nu.freeze_encoder()
 
 vmm = mm.ViscoelasticMaterialModel(
     energy_input_dim,
@@ -148,11 +148,12 @@ vmm = mm.ViscoelasticMaterialModel(
 optimizer = torch.optim.Adam(vmm.parameters(), lr=args.lr)
 
 # continue_training_script
-# vmm.load_state_dict(torch.load("material_model_run_d5/vmm.pth"))
-# optimizer.load_state_dict(torch.load("material_model_run_d5/optimizer.pth"))
+# vmm.load_state_dict(torch.load("material_model_run_z7/vmm.pth"))
+# optimizer.load_state_dict(torch.load("material_model_run_z7/optimizer.pth"))
 
 # wandb.watch(vmm, log="all", log_freq=10)
 epochs = args.epochs
+checkpoint = 0
 for epoch in tqdm(range(epochs)):
     rel_error = 0.0
     for batch_x, batch_y in train_dataloader:
@@ -185,7 +186,6 @@ for epoch in tqdm(range(epochs)):
 
     curr_time = time.time()
     time_diff = (curr_time - start_time) // 3600
-    checkpoint = 0
     if time_diff == checkpoint:
         checkpoint += 1
 
@@ -197,4 +197,4 @@ for epoch in tqdm(range(epochs)):
         torch.save(vmm.state_dict(), "{0}/vmm.pth".format(save_path))
         torch.save(args.__dict__ | indices, "{0}/args.pkl".format(save_path))
         torch.save(optimizer.state_dict(), "{0}/optimizer.pth".format(save_path))
-        os.system("cp *.py {0}/".format(save_path))
+        os.system("cp *.py {0}/".format(save_path)) 

@@ -46,7 +46,7 @@ class InverseDissipationPotentialM(nn.Module):
         return grad_p, grad_q
 
 
-class ViscoelasticMaterialModelM(nn.Module):
+class ViscoelasticMaterialModel(nn.Module):
     def __init__(
         self,
         energy_input_dim,
@@ -57,7 +57,7 @@ class ViscoelasticMaterialModelM(nn.Module):
         nu_encoder,
         dt,
     ):
-        super(ViscoelasticMaterialModelM, self).__init__()
+        super(ViscoelasticMaterialModel, self).__init__()
         self.energy_function = EnergyFunctionM(
             sum(energy_input_dim), energy_hidden_dim, E_encoder, nu_encoder
         )
