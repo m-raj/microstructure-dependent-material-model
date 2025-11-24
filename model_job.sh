@@ -38,9 +38,9 @@ python model_main.py --run_id $1  \
 				--encoder_latent_dim 15 \
 				--step 10 \
 				--encoder_path encoder_run_1d \
-				--material_model m_dependent_c \
+				--material_model m_dependent_b \
 				--device cuda \
-				--batch_size 32 \
+				--batch_size 200 \
 				--hrs 48\
 				--batch_size 100 \
 				--hrs 10\
