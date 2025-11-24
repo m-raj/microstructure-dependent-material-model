@@ -4,9 +4,9 @@ import torch.nn.functional as F
 from convex_network import *
 
 
-class EnergyFunctionM(nn.Module):
+class EnergyFunction(nn.Module):
     def __init__(self, y_dim, x_dim, hidden_dim):
-        super(EnergyFunctionM, self).__init__()
+        super(EnergyFunction, self).__init__()
 
         self.picnn = PartiallyInputConvex(y_dim, x_dim, hidden_dim, hidden_dim)
 
@@ -26,9 +26,9 @@ class EnergyFunctionM(nn.Module):
         return grad_u, grad_v
 
 
-class InverseDissipationPotentialM(nn.Module):
+class InverseDissipationPotential(nn.Module):
     def __init__(self, y_dim, x_dim, hidden_dim, E_encoder, nu_encoder):
-        super(InverseDissipationPotentialM, self).__init__()
+        super(InverseDissipationPotential, self).__init__()
 
         self.picnn = PartiallyInputConvex(y_dim, x_dim, hidden_dim, hidden_dim)
 
@@ -65,15 +65,13 @@ class ViscoelasticMaterialModel(nn.Module):
         )
         self.niv = energy_input_dim[1]
 
-        self.energy_function = EnergyFunctionM(
-            y_dim, x_dim, energy_hidden_dim, E_encoder, nu_encoder
-        )
+        self.energy_function = EnergyFunction(y_dim, x_dim, energy_hidden_dim)
         y_dim, x_dim = (
             dissipation_input_dim[1],
             dissipation_input_dim[0] + dissipation_input_dim[2],
         )
-        self.dissipation_potential = InverseDissipationPotentialM(
-            y_dim, x_dim, dissipation_hidden_dim, E_encoder, nu_encoder
+        self.dissipation_potential = InverseDissipationPotential(
+            y_dim, x_dim, dissipation_hidden_dim
         )
         self.dt = dt  # Time step size
 

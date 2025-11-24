@@ -110,7 +110,6 @@ indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
 train_dataloader = DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
 val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=False)
 
-
 loss_function = LossFunction()
 
 encoder_input_dim = 501
@@ -127,11 +126,7 @@ ae_nu.load_state_dict(torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=
 
 energy_input_dim = (1, args.niv, args.encoder_latent_dim * 2)
 energy_hidden_dim = args.hidden_dim
-dissipation_input_dim = (
-    1,
-    args.niv,
-    args.encoder_latent_dim * 2,
-)  # (p_dim, q_dim, m_dim)
+dissipation_input_dim = energy_input_dim  # (p_dim, q_dim, m_dim)
 dissipation_hidden_dim = args.hidden_dim
 
 ae_E.freeze_encoder()
@@ -206,4 +201,4 @@ for epoch in tqdm(range(epochs)):
         torch.save(vmm.state_dict(), "{0}/vmm.pth".format(save_path))
         torch.save(args.__dict__ | indices, "{0}/args.pkl".format(save_path))
         torch.save(optimizer.state_dict(), "{0}/optimizer.pth".format(save_path))
-        os.system("cp *.py {0}/".format(save_path)) 
+        os.system("cp *.py {0}/".format(save_path))
