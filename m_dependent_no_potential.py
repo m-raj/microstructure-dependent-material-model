@@ -9,8 +9,8 @@ class EnergyFunction(nn.Module):
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, 1)
 
-    def forward(self, u, v, m_features):
-        x = torch.cat((u, v, m_features), dim=-1)
+    def forward(self, u, u_dot, v, m_features):
+        x = torch.cat((u, u_dot, v, m_features), dim=-1)
         x = F.relu(self.fc1(x))
         energy = self.fc2(x)
         return energy.squeeze(-1)
@@ -22,8 +22,8 @@ class InverseDissipationPotential(nn.Module):
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, niv)
 
-    def forward(self, p, q, m_features):
-        x = torch.cat((p, q, m_features), dim=-1)
+    def forward(self, p, p_dot, q, m_features):
+        x = torch.cat((p, p_dot, q, m_features), dim=-1)
         x = F.relu(self.fc1(x))
         potential = self.fc2(x)
         return potential.squeeze(-1)
