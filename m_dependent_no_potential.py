@@ -71,6 +71,7 @@ class ViscoelasticMaterialModel(nn.Module):
     def forward(self, e, e_dot, E, nu):
         m_features = self.microstructure_encoder(E, nu)
         stress = []
+        print(self.niv)
         xi = [
             torch.zeros(
                 e.shape[0], self.niv, requires_grad=True, dtype=e.dtype, device=e.device
@@ -78,6 +79,7 @@ class ViscoelasticMaterialModel(nn.Module):
         ]
         for i in range(0, e.shape[1]):
             m_features = self.microstructure_encoder(E, nu)
+            print(xi[-1].shape)
             s = self.energy_function(e[:, i], e_dot[:, i], xi[-1], m_features)
             kinetics = self.dissipation_potential(
                 e[:, i], e_dot[:, i], xi[-1], m_features
