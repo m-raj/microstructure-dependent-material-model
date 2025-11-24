@@ -33,7 +33,6 @@ class InverseDissipationPotential(nn.Module):
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
-        m_features = self.microstructure_encoder(m_features)
         x = torch.cat((p, m_features), dim=-1)
         potential = self.picnn(q, x)
         return potential.squeeze(-1)
