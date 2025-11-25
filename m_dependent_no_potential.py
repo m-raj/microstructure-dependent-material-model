@@ -55,7 +55,7 @@ class ViscoelasticMaterialModel(nn.Module):
         self.dissipation_potential = InverseDissipationPotential(
             sdim * 2 + niv + mdim,
             dissipation_hidden_dim,
-            niv,
+            self.niv,
         )
         self.dt = dt  # Time step size
 
