@@ -47,7 +47,7 @@ parser.add_argument(
 parser.add_argument(
     "--encoder_path",
     type=str,
-    default="encoder_run_2",
+    default="encoder_run_1d",
     help="Path to the encoder model",
 )
 
@@ -64,6 +64,10 @@ parser.add_argument(
 )
 
 parser.add_argument("--niv", type=int, default=1, help="Number of internal variables")
+
+parser.add_argument(
+    "--mode", type=str, default="disabled", help="Number of internal variables"
+)
 
 args = parser.parse_args()
 
@@ -82,6 +86,7 @@ run = wandb.init(
     config=args.__dict__,
     # Name of the run
     name=args.run_id,
+    mode=args.mode,
 )
 
 data_files = [file.strip() for file in args.data_path.split(",")]
@@ -161,6 +166,7 @@ for epoch in tqdm(range(epochs)):
         rel_error += loss_function.L2RelativeError(
             vmm(*batch_x)[0], batch_y, reduction="sum"
         ).item()
+        print("train", loss)
     rel_error /= len(trainset)
     tqdm.write(
         f"Epoch [{epoch+1}/{epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
@@ -171,13 +177,15 @@ for epoch in tqdm(range(epochs)):
     val_loss = 0.0
     for val_batch_x, val_batch_y in val_dataloader:
         val_loss += F.mse_loss(
-            vmm(*val_batch_x)[0], val_batch_y, reduction="sum"
+            vmm(*val_batch_x)[0], val_batch_y, reduction="mean"
         ).item()
         val_rel_error += loss_function.L2RelativeError(
             vmm(*val_batch_x)[0], val_batch_y, reduction="sum"
         ).item()
-    val_loss /= len(valset)
+    val_loss /= len(val_dataloader)
     val_rel_error /= len(valset)
+    print("val", val_loss)
+
     schduler.step(val_loss)
     wandb.log(
         {
@@ -191,7 +199,7 @@ for epoch in tqdm(range(epochs)):
     )
 
     curr_time = time.time()
-    time_diff = (curr_time - start_time) // (args.hrs*3600)
+    time_diff = (curr_time - start_time) // (args.hrs * 3600)
     if time_diff == checkpoint:
         checkpoint += 1
 
