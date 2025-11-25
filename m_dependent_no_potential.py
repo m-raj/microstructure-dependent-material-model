@@ -10,11 +10,10 @@ class EnergyFunction(nn.Module):
         self.fc2 = nn.Linear(hidden_dim, 1)
 
     def forward(self, u, u_dot, v, m_features):
-        print(u.shape, u_dot.shape, v.shape, m_features.shape)
         x = torch.cat((u, u_dot, v, m_features), dim=-1)
         x = F.relu(self.fc1(x))
         energy = self.fc2(x)
-        return energy.squeeze(-1)
+        return energy
 
 
 class InverseDissipationPotential(nn.Module):
@@ -27,7 +26,7 @@ class InverseDissipationPotential(nn.Module):
         x = torch.cat((p, p_dot, q, m_features), dim=-1)
         x = F.relu(self.fc1(x))
         potential = self.fc2(x)
-        return potential.squeeze(-1)
+        return potential
 
 
 class ViscoelasticMaterialModel(nn.Module):
@@ -71,7 +70,6 @@ class ViscoelasticMaterialModel(nn.Module):
     def forward(self, e, e_dot, E, nu):
         m_features = self.microstructure_encoder(E, nu)
         stress = []
-        print(self.niv)
         xi = [
             torch.zeros(
                 e.shape[0], self.niv, requires_grad=True, dtype=e.dtype, device=e.device
@@ -79,7 +77,6 @@ class ViscoelasticMaterialModel(nn.Module):
         ]
         for i in range(0, e.shape[1]):
             m_features = self.microstructure_encoder(E, nu)
-            print(xi[-1].shape)
             s = self.energy_function(e[:, i], e_dot[:, i], xi[-1], m_features)
             kinetics = self.dissipation_potential(
                 e[:, i], e_dot[:, i], xi[-1], m_features

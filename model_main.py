@@ -191,7 +191,7 @@ for epoch in tqdm(range(epochs)):
     )
 
     curr_time = time.time()
-    time_diff = (curr_time - start_time) // 3600
+    time_diff = (curr_time - start_time) // (args.hrs*3600)
     if time_diff == checkpoint:
         checkpoint += 1
 

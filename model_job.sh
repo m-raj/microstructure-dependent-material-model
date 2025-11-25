@@ -10,7 +10,7 @@
 
 # Wall time: maxctivate base
 # Maximum allowed run time
-#SBATCH --time=48:30:00
+#SBATCH --time=5:30:00
 
 # Send email to user
 #SBATCH --mail-user=mraj@caltech.edu
@@ -23,23 +23,17 @@ python model_main.py --run_id $1  \
                             	--data_path "data/2024-10-13_PC1D_process10_data.pkl,
 				data/2024-10-13_PC1D_process11_data.pkl,
 				data/2024-10-13_PC1D_process12_data.pkl,
-				data/2024-10-13_PC1D_process13_data.pkl,
-				data/2024-10-13_PC1D_process14_data.pkl,
-				data/2024-10-13_PC1D_process15_data.pkl,
 				data/2024-10-13_PC1D_process16_data.pkl,
-				data/2024-10-13_PC1D_process17_data.pkl,
-				data/2024-10-13_PC1D_process18_data.pkl,
-				data/2024-10-13_PC1D_process19_data.pkl,
 				data/2024-10-13_PC1D_process0_data.pkl"\
 				--epochs 5000 \
 				--lr 1e-3 \
 				--hidden_dim 200 \
 				--encoder_hidden_dim 200 \
 				--encoder_latent_dim 15 \
-				--step 10 \
+				--step 50 \
 				--encoder_path encoder_run_1d \
-				--material_model m_dependent_no_potential \
+				--material_model m_dependent_c \
 				--device cuda \
 				--batch_size 200 \
-				--hrs 48\
+				--hrs 0.1\
 				--niv 1
