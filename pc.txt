@@ -1,0 +1,4 @@
+data/2024-10-13_PC1D_process10_data.pkl
+data/2024-10-13_PC1D_process11_data.pkl
+data/2024-10-13_PC1D_process12_data.pkl
+data/2024-10-13_PC1D_process13_data.pkl

@@ -68,6 +68,9 @@ parser.add_argument("--niv", type=int, default=1, help="Number of internal varia
 parser.add_argument(
     "--mode", type=str, default="disabled", help="Number of internal variables"
 )
+parser.add_argument(
+    "--pca", type=str, default="True", help="Number of internal variables"
+)
 
 args = parser.parse_args()
 
@@ -89,7 +92,10 @@ run = wandb.init(
     mode=args.mode,
 )
 
-data_files = [file.strip() for file in args.data_path.split(",")]
+with open("{args.data_path}", "r") as f:
+    content = f.read()
+
+data_files = [file.strip() for file in content.split("\n")]
 print(data_files)
 
 datasets = [
@@ -119,15 +125,26 @@ loss_function = LossFunction()
 
 encoder_input_dim = 501
 
-ae_E = AutoEncoder(
-    encoder_input_dim, args.encoder_hidden_dim, args.encoder_latent_dim
-).to(device)
-ae_nu = AutoEncoder(
-    encoder_input_dim, args.encoder_hidden_dim, args.encoder_latent_dim
-).to(device)
 
-ae_E.load_state_dict(torch.load(f"{args.encoder_path}/ae_E.pth", weights_only=True))
-ae_nu.load_state_dict(torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=True))
+if args.pca:
+    print("Using PCA Encoder")
+    ae_E = torch.load(f"{args.encoder_path}/ae_E.pth")
+    ae_nu = torch.load(f"{args.encoder_path}/ae_nu.pth")
+    ae_E.initialize_weights(args.encoder_latent_dim)
+    ae_nu.initialize_weights(args.encoder_latent_dim)
+else:
+    print("Using AutoEncoder")
+    ae_E = AutoEncoder(
+        encoder_input_dim, args.encoder_hidden_dim, args.encoder_latent_dim
+    ).to(device)
+    ae_nu = AutoEncoder(
+        encoder_input_dim, args.encoder_hidden_dim, args.encoder_latent_dim
+    ).to(device)
+    ae_E.load_state_dict(torch.load(f"{args.encoder_path}/ae_E.pth", weights_only=True))
+    ae_nu.load_state_dict(
+        torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=True)
+    )
+
 
 energy_input_dim = (1, args.niv, args.encoder_latent_dim * 2)
 energy_hidden_dim = args.hidden_dim
@@ -166,7 +183,7 @@ for epoch in tqdm(range(epochs)):
         rel_error += loss_function.L2RelativeError(
             vmm(*batch_x)[0], batch_y, reduction="sum"
         ).item()
-        print("train", loss)
+        # print("train", loss)
     rel_error /= len(trainset)
     tqdm.write(
         f"Epoch [{epoch+1}/{epochs}], Loss: {loss:.4f}, Rel_Error: {rel_error:.4f}"
@@ -184,7 +201,7 @@ for epoch in tqdm(range(epochs)):
         ).item()
     val_loss /= len(val_dataloader)
     val_rel_error /= len(valset)
-    print("val", val_loss)
+    # print("val", val_loss)
 
     schduler.step(val_loss)
     wandb.log(

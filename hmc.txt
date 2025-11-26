@@ -1,0 +1,4 @@
+data/2024-12-10_mixture_random_field_process1_data.pkl
+data/2024-12-10_mixture_random_field_process2_data.pkl
+data/2024-12-10_mixture_random_field_process3_data.pkl
+data/2024-12-10_mixture_random_field_process4_data.pkl
