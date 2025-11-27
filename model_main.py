@@ -229,3 +229,4 @@ for epoch in tqdm(range(epochs)):
         torch.save(args.__dict__ | indices, "{0}/args.pkl".format(save_path))
         torch.save(optimizer.state_dict(), "{0}/optimizer.pth".format(save_path))
         os.system("cp *.py {0}/".format(save_path))
+        os.system("cp *.txt {0}/".format(save_path))
