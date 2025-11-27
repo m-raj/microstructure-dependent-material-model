@@ -55,7 +55,7 @@ run = wandb.init(
 )
 
 # Load a pickle file
-with open("{args.data_path}", "r") as f:
+with open(f"{args.data_path}", "r") as f:
     content = f.read()
 
 data_files = [file.strip() for file in content.split("\n")]
