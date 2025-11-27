@@ -20,7 +20,7 @@
 
 # Run the mpi job
 python model_main.py --run_id $1  \
-                            	--data_path "pc.txt" \
+                --data_path "pc.txt" \
 				--pca 1 \
 				--epochs 5000 \
 				--lr 1e-3 \

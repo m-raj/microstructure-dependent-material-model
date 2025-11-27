@@ -55,8 +55,12 @@ run = wandb.init(
 )
 
 # Load a pickle file
-data_files = [file.strip() for file in args.data_path.split(",")]
+with open("{args.data_path}", "r") as f:
+    content = f.read()
+
+data_files = [file.strip() for file in content.split("\n")]
 print(data_files)
+
 datasets = [
     ViscoelasticDataset(
         data_path=file,
@@ -74,8 +78,8 @@ trainset, valset = torch.utils.data.random_split(dataset, [train_length, val_len
 indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
 train_dataloader = DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
 val_dataloader = DataLoader(valset, batch_size=args.batch_size, shuffle=True)
-#print(len(dataset), len(trainset), len(valset))
-#print(len(train_dataloader),len(val_dataloader))i
+# print(len(dataset), len(trainset), len(valset))
+# print(len(train_dataloader),len(val_dataloader))i
 loss_function = LossFunction()
 
 ae_E = AutoEncoder(501, args.hidden_dim, args.latent_dim).to(device)
@@ -89,7 +93,7 @@ for epoch in tqdm(range(num_epochs)):
         rel_error += loss_function.L2RelativeError(
             ae_E(E_batch).unsqueeze(-1), E_batch.unsqueeze(-1), reduction="sum"
         ).item()
-#    print(rel_error, len(trainset), train_dataloader.batch_size)
+    #    print(rel_error, len(trainset), train_dataloader.batch_size)
     rel_error /= len(trainset)
 
     # Validation Step
@@ -98,7 +102,7 @@ for epoch in tqdm(range(num_epochs)):
         val_rel_error += loss_function.L2RelativeError(
             ae_E(E_batch).unsqueeze(-1), E_batch.unsqueeze(-1), reduction="sum"
         ).item()
-#    print(val_rel_error, len(valset), val_dataloader.batch_size)
+    #    print(val_rel_error, len(valset), val_dataloader.batch_size)
     val_rel_error /= len(valset)
 
     run.log(
@@ -129,14 +133,14 @@ for epoch in tqdm(range(num_epochs)):
         val_rel_error += loss_function.L2RelativeError(
             ae_nu(nu_batch).unsqueeze(-1), nu_batch.unsqueeze(-1), reduction="sum"
         ).item()
-    val_rel_error /= len(valset) 
+    val_rel_error /= len(valset)
     run.log(
         {
             "nu_Loss": loss,
             "nu_epoch": epoch,
             "nu_lr": ae_nu_optimizer.param_groups[0]["lr"],
             "nu_Train_Relative_Error": rel_error,
-            "nu_Val_Relative_error": val_rel_error
+            "nu_Val_Relative_error": val_rel_error,
         }
     )
 
