@@ -10,7 +10,6 @@ parser.add_argument("--run_id", type=str, help="Identifier for the training run"
 parser.add_argument(
     "--data_path",
     type=str,
-    default="data/2024-10-13_PC1D_process10_data.pkl",
     help="Path to the dataset",
 )
 parser.add_argument(
@@ -69,7 +68,7 @@ parser.add_argument(
     "--mode", type=str, default="disabled", help="Number of internal variables"
 )
 parser.add_argument(
-    "--pca", type=str, default="True", help="Number of internal variables"
+    "--pca", type=int, default="True", help="Number of internal variables"
 )
 
 args = parser.parse_args()
@@ -92,7 +91,7 @@ run = wandb.init(
     mode=args.mode,
 )
 
-with open("{args.data_path}", "r") as f:
+with open(f"{args.data_path}", "r") as f:
     content = f.read()
 
 data_files = [file.strip() for file in content.split("\n")]
