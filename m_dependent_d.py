@@ -27,7 +27,7 @@ class EnergyFunction(nn.Module):
 
 
 class InverseDissipationPotential(nn.Module):
-    def __init__(self, y_dim, x_dim, hidden_dim, E_encoder, nu_encoder):
+    def __init__(self, y_dim, x_dim, hidden_dim):
         super(InverseDissipationPotential, self).__init__()
 
         self.picnn = PartiallyInputConvex(y_dim, x_dim, hidden_dim, hidden_dim)
