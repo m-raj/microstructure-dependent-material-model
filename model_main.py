@@ -163,9 +163,7 @@ vmm = mm.ViscoelasticMaterialModel(
     dt=args.step / 5000.0,
 ).to(device)
 optimizer = torch.optim.Adam(vmm.parameters(), lr=args.lr)
-schduler = lr_scheduler.ReduceLROnPlateau(
-    optimizer, mode="min", factor=0.5, patience=20
-)
+schduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=5)
 
 # continue_training_script
 # vmm.load_state_dict(torch.load("material_model_run_z7/vmm.pth"))
