@@ -19,9 +19,9 @@
 # Run the mpi job
 python encoder_main.py --run_id $1  \
  		      		 --data_path "hmc.txt"\
-			   	--epochs 2000 \
+			   	--epochs 1000 \
 				--lr 1e-3 \
-				--hidden_dim 512 \
+				--hidden_dim 200 \
 				--latent_dim $2 \
 				--step 50 \
 				--batch_size 1000 \

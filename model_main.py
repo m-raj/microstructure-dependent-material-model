@@ -92,7 +92,7 @@ run = wandb.init(
 )
 
 with open(f"{args.data_path}", "r") as f:
-    content = f.read()
+    content = f.read().strip()
 
 data_files = [file.strip() for file in content.split("\n")]
 print(data_files)
