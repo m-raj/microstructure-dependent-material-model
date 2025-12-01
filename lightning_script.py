@@ -28,6 +28,14 @@ class LitCustomModule(L.LightningModule):
             prefix=name + "val_",
         )
 
+        self.test_metrics = MetricCollection(
+            {
+                "mse": metrics.MeanMetric(),
+                "mre": metrics.MeanMetric(),
+            },
+            prefix=name + "test_",
+        )
+
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
 
@@ -35,7 +43,7 @@ class LitCustomModule(L.LightningModule):
             "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
                 optimizer, mode="min", factor=0.5, patience=5
             ),
-            "monitor": self.name+"val_mse",
+            "monitor": self.name + "val_mse",
         }
 
         return [optimizer], [scheduler_config]
@@ -47,6 +55,10 @@ class LitCustomModule(L.LightningModule):
     def on_validation_epoch_end(self):
         self.log_dict(self.val_metrics.compute())
         self.val_metrics.reset()
+
+    def on_test_epoch_end(self):
+        self.log_dict(self.test_metrics.compute())
+        self.test_metrics.reset()
 
 
 class LitVMM(LitCustomModule):
@@ -70,6 +82,16 @@ class LitVMM(LitCustomModule):
         rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
         self.val_metrics["mse"].update(loss)
         self.val_metrics["mre"].update(rel_error)
+        return loss
+
+    def test_step(self, batch):
+        torch.set_grad_enabled(True)
+        x, y = batch
+        y_hat, _ = self.model(*x)
+        loss = F.mse_loss(y_hat, y)
+        rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
+        self.test_metrics["mse"].update(loss)
+        self.test_metrics["mre"].update(rel_error)
         return loss
 
 

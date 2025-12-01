@@ -50,14 +50,20 @@ if __name__ == "__main__":
     # valset = Subset(dataset, indices["val_indices"])
 
     length = len(dataset)
-    train_length, val_length = int(0.8 * length), length - int(0.8 * length)
-    trainset, valset = random_split(dataset, [train_length, val_length])
-    indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
+    trainset, valset, testset = random_split(dataset, [0.8, 0.1, 0.1])
+    indices = {
+        "train_indices": trainset.indices,
+        "val_indices": valset.indices,
+        "test_indices": testset.indices,
+    }
     train_dataloader = DataLoader(
         trainset, batch_size=args.batch_size, shuffle=True, num_workers=0
     )
     val_dataloader = DataLoader(
-        valset, batch_size=args.batch_size, shuffle=False, num_workers=0
+        valset, batch_size=args.batch_size, shuffle=True, num_workers=0
+    )
+    test_dataloader = DataLoader(
+        testset, batch_size=args.batch_size, shuffle=True, num_workers=0
     )
 
     loss_function = LossFunction()
@@ -98,15 +104,20 @@ if __name__ == "__main__":
                 mode="min",
             )
             lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
-
+            early_stopping = lp.callbacks.EarlyStopping(
+                monitor="E_val_mse",
+                patience=20,
+                mode="min",
+            )
             trainer_ae_E = lp.Trainer(
                 max_epochs=args.encoder_epochs,
                 accelerator="gpu" if torch.cuda.is_available() else "cpu",
                 devices=1,
                 logger=wandb_logger,
-                callbacks=[model_checkpoint, lr_monitor],
+                callbacks=[model_checkpoint, lr_monitor, early_stopping],
             )
             trainer_ae_E.fit(lit_ae_E, train_dataloader, val_dataloader)
+            trainer_ae_E.test(lit_ae_E, test_dataloader)
 
             lit_ae_nu = LitAutoEncoder(ae_nu, name="nu_")
             model_checkpoint = lp.callbacks.ModelCheckpoint(
@@ -116,15 +127,20 @@ if __name__ == "__main__":
                 mode="min",
             )
             lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
-
+            early_stopping = lp.callbacks.EarlyStopping(
+                monitor="nu_val_mse",
+                patience=20,
+                mode="min",
+            )
             trainer_ae_nu = lp.Trainer(
                 max_epochs=args.encoder_epochs,
                 accelerator="gpu" if torch.cuda.is_available() else "cpu",
                 devices=1,
                 logger=wandb_logger,
-                callbacks=[model_checkpoint, lr_monitor],
+                callbacks=[model_checkpoint, lr_monitor, early_stopping],
             )
             trainer_ae_nu.fit(lit_ae_nu, train_dataloader, val_dataloader)
+            trainer_ae_nu.test(lit_ae_nu, test_dataloader)
 
     energy_input_dim = (1, args.niv, args.encoder_latent_dim * 2)
     energy_hidden_dim = args.hidden_dim
@@ -158,14 +174,23 @@ if __name__ == "__main__":
         mode="min",
     )
     lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
+    early_stopping = lp.callbacks.EarlyStopping(
+        monitor="vmm_val_mse",
+        patience=20,
+        mode="min",
+    )
 
     lit = LitVMM(vmm, name="vmm_")
     trainer = lp.Trainer(
         max_epochs=epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
         devices=1,
-        callbacks=[model_checkpoint, lr_monitor],
+        callbacks=[model_checkpoint, lr_monitor, early_stopping],
         logger=wandb_logger,
     )
 
     trainer.fit(lit, train_dataloader, val_dataloader)
+
+    trainer.test(lit, test_dataloader)
+
+    wandb_logger.experiment.finish()
