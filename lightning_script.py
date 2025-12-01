@@ -129,3 +129,18 @@ class LitAutoEncoder(LitCustomModule):
         self.val_metrics["mse"].update(loss)
         self.val_metrics["mre"].update(rel_error)
         return loss
+
+    def validation_step(self, batch):
+        x, _ = batch
+        if self.name == "E_":
+            x = x[2]
+        elif self.name == "nu_":
+            x = x[3]
+        x_recon = self.model(x)
+        loss = F.mse_loss(x_recon, x, reduction="mean")
+        rel_error = self.loss_function.L2RelativeError(
+            x_recon.unsqueeze(-1), x.unsqueeze(-1), reduction=None
+        )
+        self.test_metrics["mse"].update(loss)
+        self.test_metrics["mre"].update(rel_error)
+        return loss
