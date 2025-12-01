@@ -7,7 +7,7 @@ from util import *
 
 
 class LitCustomModule(L.LightningModule):
-    def __init__(self, model):
+    def __init__(self, model, name):
         super().__init__()
         self.model = model
         self.loss_function = LossFunction()
@@ -16,7 +16,7 @@ class LitCustomModule(L.LightningModule):
                 "mse": metrics.MeanMetric(),
                 "mre": metrics.MeanMetric(),
             },
-            prefix="train_",
+            prefix=name + "train_",
         )
 
         self.val_metrics = MetricCollection(
@@ -24,7 +24,7 @@ class LitCustomModule(L.LightningModule):
                 "mse": metrics.MeanMetric(),
                 "mre": metrics.MeanMetric(),
             },
-            prefix="val_",
+            prefix=name + "val_",
         )
 
     def configure_optimizers(self):
@@ -49,8 +49,8 @@ class LitCustomModule(L.LightningModule):
 
 
 class LitVMM(LitCustomModule):
-    def __init__(self, model):
-        super().__init__(model)
+    def __init__(self, model, name):
+        super().__init__(model, name)
 
     def training_step(self, batch):
         x, y = batch
@@ -74,14 +74,14 @@ class LitVMM(LitCustomModule):
 
 class LitAutoEncoder(LitCustomModule):
     def __init__(self, model, name):
-        super().__init__(model)
+        super().__init__(model, name)
         self.name = name
 
     def training_step(self, batch):
         x, _ = batch
-        if self.name == "E":
+        if self.name == "E_":
             x = x[2]
-        elif self.name == "nu":
+        elif self.name == "nu_":
             x = x[3]
         x_recon = self.model(x)
         loss = F.mse_loss(x_recon, x, reduction="mean")

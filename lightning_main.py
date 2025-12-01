@@ -90,7 +90,7 @@ if __name__ == "__main__":
             )
         else:
             print("No encoder path provided, training from scratch.")
-            lit_ae_E = LitAutoEncoder(ae_E, name="E")
+            lit_ae_E = LitAutoEncoder(ae_E, name="E_")
             model_checkpoint = lp.callbacks.ModelCheckpoint(
                 every_n_epochs=5,
                 dirpath=folder,
@@ -105,7 +105,7 @@ if __name__ == "__main__":
             )
             trainer_ae_E.fit(lit_ae_E, train_dataloader, val_dataloader)
 
-            lit_ae_nu = LitAutoEncoder(ae_nu, name="nu")
+            lit_ae_nu = LitAutoEncoder(ae_nu, name="nu_")
             model_checkpoint = lp.callbacks.ModelCheckpoint(
                 every_n_epochs=5,
                 dirpath=folder,
@@ -152,7 +152,7 @@ if __name__ == "__main__":
         mode="min",
     )
 
-    lit = LitVMM(vmm)
+    lit = LitVMM(vmm, name="vmm_")
     trainer = lp.Trainer(
         max_epochs=epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
