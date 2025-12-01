@@ -27,8 +27,6 @@ if __name__ == "__main__":
         mode=args.mode,
     )
 
-    lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
-
     with open(f"{args.data_path}", "r") as f:
         content = f.read().strip()
 
@@ -99,6 +97,8 @@ if __name__ == "__main__":
                 filename="ae_E-{epoch:02d}-{train_rel_error:.4f}",
                 mode="min",
             )
+            lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
+
             trainer_ae_E = lp.Trainer(
                 max_epochs=args.encoder_epochs,
                 accelerator="gpu" if torch.cuda.is_available() else "cpu",
@@ -115,6 +115,8 @@ if __name__ == "__main__":
                 filename="ae_nu-{epoch:02d}-{train_rel_error:.4f}",
                 mode="min",
             )
+            lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
+
             trainer_ae_nu = lp.Trainer(
                 max_epochs=args.encoder_epochs,
                 accelerator="gpu" if torch.cuda.is_available() else "cpu",
@@ -155,6 +157,7 @@ if __name__ == "__main__":
         filename="vmm-{epoch:02d}-{train_rel_error:.4f}",
         mode="min",
     )
+    lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
 
     lit = LitVMM(vmm, name="vmm_")
     trainer = lp.Trainer(
