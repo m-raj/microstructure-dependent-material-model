@@ -10,7 +10,7 @@
 
 # Wall time: maxctivate base
 # Maximum allowed run time
-#SBATCH --time=5:30:00
+#SBATCH --time=8:30:00
 
 # Send email to user
 #SBATCH --mail-user=mraj@caltech.edu
@@ -33,7 +33,7 @@ args=(
 	--encoder_lr 0.001 
 	--material_model m_dependent_c 
 	--hidden_dim 200
-	--epochs 1000
+	--epochs 2000
 	--lr 0.001 
 	--batch_size 200 
 	--niv 1

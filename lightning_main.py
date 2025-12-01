@@ -98,7 +98,7 @@ if __name__ == "__main__":
             print("No encoder path provided, training from scratch.")
             lit_ae_E = LitAutoEncoder(ae_E, name="E_")
             model_checkpoint = lp.callbacks.ModelCheckpoint(
-                every_n_epochs=5,
+                every_n_epochs=100,
                 dirpath=folder,
                 filename="ae_E-{epoch:02d}-{train_rel_error:.4f}",
                 mode="min",
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
             lit_ae_nu = LitAutoEncoder(ae_nu, name="nu_")
             model_checkpoint = lp.callbacks.ModelCheckpoint(
-                every_n_epochs=5,
+                every_n_epochs=100,
                 dirpath=folder,
                 filename="ae_nu-{epoch:02d}-{train_rel_error:.4f}",
                 mode="min",
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     os.system("cp *.txt {0}/".format(folder))
 
     model_checkpoint = lp.callbacks.ModelCheckpoint(
-        every_n_epochs=5,
+        every_n_epochs=100,
         dirpath=folder,
         filename="vmm-{epoch:02d}-{train_rel_error:.4f}",
         mode="min",
