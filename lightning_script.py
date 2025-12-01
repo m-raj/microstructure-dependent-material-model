@@ -1,0 +1,108 @@
+import lightning as L
+import torch
+import torch.nn.functional as F
+import torchmetrics.aggregation as metrics
+from torchmetrics import MetricCollection
+from util import *
+
+
+class LitCustomModule(L.LightningModule):
+    def __init__(self, model):
+        super().__init__()
+        self.model = model
+        self.loss_function = LossFunction()
+        self.train_metrics = MetricCollection(
+            {
+                "mse": metrics.MeanMetric(),
+                "mre": metrics.MeanMetric(),
+            },
+            prefix="train_",
+        )
+
+        self.val_metrics = MetricCollection(
+            {
+                "mse": metrics.MeanMetric(),
+                "mre": metrics.MeanMetric(),
+            },
+            prefix="val_",
+        )
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+
+        scheduler_config = {
+            "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer, mode="min", factor=0.5, patience=5
+            ),
+            "monitor": "val_mse",
+        }
+
+        return [optimizer], [scheduler_config]
+
+    def on_train_epoch_end(self):
+        self.log_dict(self.train_metrics.compute())
+        self.train_metrics.reset()
+
+    def on_validation_epoch_end(self):
+        self.log_dict(self.val_metrics.compute())
+        self.val_metrics.reset()
+
+
+class LitVMM(LitCustomModule):
+    def __init__(self, model):
+        super().__init__(model)
+
+    def training_step(self, batch):
+        x, y = batch
+        y_hat, _ = self.model(*x)
+        loss = F.mse_loss(y_hat, y, reduction="mean")
+        rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
+        self.train_metrics["mse"].update(loss)
+        self.train_metrics["mre"].update(rel_error)
+        return loss
+
+    def validation_step(self, batch):
+        torch.set_grad_enabled(True)
+        x, y = batch
+        y_hat, _ = self.model(*x)
+        loss = F.mse_loss(y_hat, y)
+        rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
+        self.val_metrics["mse"].update(loss)
+        self.val_metrics["mre"].update(rel_error)
+        return loss
+
+
+class LitAutoEncoder(LitCustomModule):
+    def __init__(self, model, name):
+        super().__init__(model)
+        self.name = name
+
+    def training_step(self, batch):
+        x, _ = batch
+        if self.name == "E":
+            x = x[2]
+        elif self.name == "nu":
+            x = x[3]
+        x_recon = self.model(x)
+        loss = F.mse_loss(x_recon, x, reduction="mean")
+        rel_error = self.loss_function.L2RelativeError(
+            x_recon.unsqueeze(-1), x.unsqueeze(-1), reduction=None
+        )
+        self.train_metrics["mse"].update(loss)
+        self.train_metrics["mre"].update(rel_error)
+        return loss
+
+    def validation_step(self, batch):
+        x, _ = batch
+        if self.name == "E":
+            x = x[2]
+        elif self.name == "nu":
+            x = x[3]
+        x_recon = self.model(x)
+        loss = F.mse_loss(x_recon, x, reduction="mean")
+        rel_error = self.loss_function.L2RelativeError(
+            x_recon.unsqueeze(-1), x.unsqueeze(-1), reduction=None
+        )
+        self.val_metrics["mse"].update(loss)
+        self.val_metrics["mre"].update(rel_error)
+        return loss

@@ -49,15 +49,11 @@ class ViscoelasticDataset(Dataset):
         return len(self.e)
 
     def __getitem__(self, idx):
-        if self.encoder:
-            x = self.E[idx].to(self.device), self.nu[idx].to(self.device)
-            return x
-        else:
-            x = (
-                self.e[idx].to(self.device),
-                self.e_dot[idx].to(self.device),
-                self.E[idx].to(self.device),
-                self.nu[idx].to(self.device),
-            )
-            y = self.s[idx].to(self.device)
-            return x, y
+        x = (
+            self.e[idx].to(self.device),
+            self.e_dot[idx].to(self.device),
+            self.E[idx].to(self.device),
+            self.nu[idx].to(self.device),
+        )
+        y = self.s[idx].to(self.device)
+        return x, y
