@@ -5,5 +5,4 @@ wandb/
 *run*/
 __pycache__/
 *.out
-*.sh
 *.cpkt
