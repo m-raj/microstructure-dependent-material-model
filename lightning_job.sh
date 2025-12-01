@@ -33,7 +33,7 @@ args=(
 	--encoder_lr 0.001 
 	--material_model m_dependent_c 
 	--hidden_dim 128 
-	--epochs 1000 
+	--epochs 10
 	--lr 0.001 
 	--batch_size 1000 
 	--niv 1
