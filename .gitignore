@@ -6,3 +6,4 @@ wandb/
 __pycache__/
 *.out
 *.cpkt*
+combined_encoding_training/
