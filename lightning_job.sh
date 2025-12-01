@@ -27,16 +27,17 @@ args=(
 #	--encoder_path encoder_path
 	--data_path hmc.txt
 	--encoder_latent_dim 15 
-	--encoder_hidden_dim 128 
-	--encoder_epochs 10 
+	--encoder_hidden_dim 200
+	--encoder_epochs 1100 
 	--encoder_batch_size 1000 
 	--encoder_lr 0.001 
 	--material_model m_dependent_c 
-	--hidden_dim 128 
-	--epochs 10
+	--hidden_dim 200
+	--epochs 1000
 	--lr 0.001 
 	--batch_size 200 
 	--niv 1
+	--step 50
 )
 
 srun python lightning_main.py "${args[@]}"
