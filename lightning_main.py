@@ -19,7 +19,7 @@ if __name__ == "__main__":
         # Set the wandb entity where your project will be logged (generally your team name).
         entity="sci-ai",
         # Set the wandb project where this run will be logged.
-        project="microstructure-dependent-potential-learning",
+        project="combined_encoding_training",
         # Track hyperparameters and run metadata.
         config=args.__dict__,
         # Name of the run
