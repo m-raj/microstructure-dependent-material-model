@@ -187,6 +187,7 @@ if __name__ == "__main__":
         devices=1,
         callbacks=[model_checkpoint, lr_monitor, early_stopping],
         logger=wandb_logger,
+        inference_mode=False,
     )
 
     trainer.fit(lit, train_dataloader, val_dataloader)

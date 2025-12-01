@@ -75,23 +75,23 @@ class LitVMM(LitCustomModule):
         return loss
 
     def validation_step(self, batch):
-        torch.set_grad_enabled(True)
-        x, y = batch
-        y_hat, _ = self.model(*x)
-        loss = F.mse_loss(y_hat, y)
-        rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
-        self.val_metrics["mse"].update(loss)
-        self.val_metrics["mre"].update(rel_error)
+        with torch.set_grad_enabled(True):
+            x, y = batch
+            y_hat, _ = self.model(*x)
+            loss = F.mse_loss(y_hat, y)
+            rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
+            self.val_metrics["mse"].update(loss)
+            self.val_metrics["mre"].update(rel_error)
         return loss
 
     def test_step(self, batch):
-        torch.set_grad_enabled(True)
-        x, y = batch
-        y_hat, _ = self.model(*x)
-        loss = F.mse_loss(y_hat, y)
-        rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
-        self.test_metrics["mse"].update(loss)
-        self.test_metrics["mre"].update(rel_error)
+        with torch.set_grad_enabled(True):    
+            x, y = batch
+            y_hat, _ = self.model(*x)
+            loss = F.mse_loss(y_hat, y)
+            rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
+            self.test_metrics["mse"].update(loss)
+            self.test_metrics["mre"].update(rel_error)
         return loss
 
 
@@ -130,7 +130,7 @@ class LitAutoEncoder(LitCustomModule):
         self.val_metrics["mre"].update(rel_error)
         return loss
 
-    def validation_step(self, batch):
+    def test_step(self, batch):
         x, _ = batch
         if self.name == "E_":
             x = x[2]
