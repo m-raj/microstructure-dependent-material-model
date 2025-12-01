@@ -35,7 +35,7 @@ args=(
 	--hidden_dim 128 
 	--epochs 10
 	--lr 0.001 
-	--batch_size 1000 
+	--batch_size 200 
 	--niv 1
 )
 

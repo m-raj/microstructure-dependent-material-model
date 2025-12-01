@@ -27,6 +27,8 @@ if __name__ == "__main__":
         mode=args.mode,
     )
 
+    lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
+
     with open(f"{args.data_path}", "r") as f:
         content = f.read().strip()
 
@@ -102,6 +104,7 @@ if __name__ == "__main__":
                 accelerator="gpu" if torch.cuda.is_available() else "cpu",
                 devices=1,
                 logger=wandb_logger,
+                callbacks=[model_checkpoint, lr_monitor],
             )
             trainer_ae_E.fit(lit_ae_E, train_dataloader, val_dataloader)
 
@@ -117,10 +120,9 @@ if __name__ == "__main__":
                 accelerator="gpu" if torch.cuda.is_available() else "cpu",
                 devices=1,
                 logger=wandb_logger,
-                callbacks=[model_checkpoint],
+                callbacks=[model_checkpoint, lr_monitor],
             )
             trainer_ae_nu.fit(lit_ae_nu, train_dataloader, val_dataloader)
-
 
     energy_input_dim = (1, args.niv, args.encoder_latent_dim * 2)
     energy_hidden_dim = args.hidden_dim
@@ -159,7 +161,7 @@ if __name__ == "__main__":
         max_epochs=epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
         devices=1,
-        callbacks=[model_checkpoint],
+        callbacks=[model_checkpoint, lr_monitor],
         logger=wandb_logger,
     )
 
