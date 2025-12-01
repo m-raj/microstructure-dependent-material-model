@@ -19,19 +19,19 @@
 #SBATCH --mail-type=FAIL
 
 # Run the mpi job
-args = (
-	--run_id "model_experiment_01" 
-	--mode "disable" 
-	--device "gpu" 
+args=(
+	--run_id $1
+	--mode online 
+	--device cuda 
 #	--pca 
-#	--encoder_path "encoder_path"
-	--data_path "hmc.txt" 
+#	--encoder_path encoder_path
+	--data_path hmc.txt
 	--encoder_latent_dim 15 
 	--encoder_hidden_dim 128 
-	--encoder_epochs 100 
+	--encoder_epochs 10 
 	--encoder_batch_size 1000 
 	--encoder_lr 0.001 
-	--material_model "m_dependent_b" 
+	--material_model m_dependent_c 
 	--hidden_dim 128 
 	--epochs 1000 
 	--lr 0.001 

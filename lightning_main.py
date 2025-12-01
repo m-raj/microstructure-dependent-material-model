@@ -1,6 +1,6 @@
 import torch
 
-torch.multiprocessing.set_start_method("fork")
+# torch.multiprocessing.set_start_method("spawn")
 import importlib, os
 from torch.utils.data import DataLoader, random_split, ConcatDataset
 import lightning.pytorch as lp
@@ -54,10 +54,10 @@ if __name__ == "__main__":
     trainset, valset = random_split(dataset, [train_length, val_length])
     indices = {"train_indices": trainset.indices, "val_indices": valset.indices}
     train_dataloader = DataLoader(
-        trainset, batch_size=args.batch_size, shuffle=True, num_workers=4
+        trainset, batch_size=args.batch_size, shuffle=True, num_workers=0
     )
     val_dataloader = DataLoader(
-        valset, batch_size=args.batch_size, shuffle=False, num_workers=4
+        valset, batch_size=args.batch_size, shuffle=False, num_workers=0
     )
 
     loss_function = LossFunction()
