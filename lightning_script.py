@@ -9,6 +9,7 @@ from util import *
 class LitCustomModule(L.LightningModule):
     def __init__(self, model, name):
         super().__init__()
+        self.name = name
         self.model = model
         self.loss_function = LossFunction()
         self.train_metrics = MetricCollection(
@@ -34,7 +35,7 @@ class LitCustomModule(L.LightningModule):
             "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
                 optimizer, mode="min", factor=0.5, patience=5
             ),
-            "monitor": "val_mse",
+            "monitor": self.name+"val_mse",
         }
 
         return [optimizer], [scheduler_config]
@@ -94,9 +95,9 @@ class LitAutoEncoder(LitCustomModule):
 
     def validation_step(self, batch):
         x, _ = batch
-        if self.name == "E":
+        if self.name == "E_":
             x = x[2]
-        elif self.name == "nu":
+        elif self.name == "nu_":
             x = x[3]
         x_recon = self.model(x)
         loss = F.mse_loss(x_recon, x, reduction="mean")

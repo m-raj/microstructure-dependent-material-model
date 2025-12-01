@@ -39,6 +39,6 @@ args=(
 	--niv 1
 )
 
-python lightning_main.py "${args[@]}"
+srun python lightning_main.py "${args[@]}"
 	
 

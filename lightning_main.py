@@ -119,6 +119,8 @@ if __name__ == "__main__":
                 logger=wandb_logger,
                 callbacks=[model_checkpoint],
             )
+            trainer_ae_nu.fit(lit_ae_nu, train_dataloader, val_dataloader)
+
 
     energy_input_dim = (1, args.niv, args.encoder_latent_dim * 2)
     energy_hidden_dim = args.hidden_dim
