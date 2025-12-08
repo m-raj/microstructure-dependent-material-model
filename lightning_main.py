@@ -143,10 +143,13 @@ if __name__ == "__main__":
             trainer_ae_nu.test(lit_ae_nu, test_dataloader)
 
     energy_input_dim = (1, args.niv, args.encoder_latent_dim * 2)
-    energy_hidden_dim = args.hidden_dim
+    energy_hidden_dim = list(
+        map(lambda l: l.strip(), args.hidden_dim.strip().split(","))
+    )
     dissipation_input_dim = energy_input_dim  # (p_dim, q_dim, m_dim)
-    dissipation_hidden_dim = args.hidden_dim
-
+    dissipation_hidden_dim = list(
+        map(lambda l: l.strip(), args.hidden_dim.strip().split(","))
+    )
     ae_E.freeze_encoder()
     ae_nu.freeze_encoder()
 

@@ -56,7 +56,9 @@ def parse_args():
         default="m_dependent_b",
         help="Material model file",
     )
-    parser.add_argument("--hidden_dim", type=int, default=20)
+    parser.add_argument(
+        "--hidden_dim", type=str, default="128", help="Hidden dimensions"
+    )
     parser.add_argument(
         "--step", type=int, default=50, help="Step size for downsampling the data"
     )

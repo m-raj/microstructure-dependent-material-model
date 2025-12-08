@@ -12,18 +12,22 @@ class ReLU2(nn.Module):
 
 
 class EnergyFunction(nn.Module):
-    def __init__(self, input_dim, hidden_dim):
+    def __init__(self, input_dim, hidden_dims):
         super(EnergyFunction, self).__init__()
-        self.fc1 = nn.Linear(input_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc3 = nn.Linear(hidden_dim, 1)
+
+        self.layers = nn.ModuleList()
+        for i in range(len(hidden_dims)):
+            in_dim = input_dim if i == 0 else hidden_dims[i - 1]
+            out_dim = hidden_dims[i]
+            self.layers.append(nn.Linear(in_dim, out_dim))
+        self.output_layer = nn.Linear(hidden_dims[-1], 1)
         self.activation = ReLU2()
 
     def forward(self, u, v, m_features):
         x = torch.cat((u, v, m_features), dim=-1)
-        x = self.activation(self.fc1(x))
-        x = self.activation(self.fc2(x))
-        energy = self.fc3(x)
+        for layer in self.layers:
+            x = self.activation(layer(x))
+        energy = self.output_layer(x)
         return energy.squeeze(-1)
 
     def compute_derivative(self, u, v, m_features):
@@ -36,19 +40,22 @@ class EnergyFunction(nn.Module):
 
 
 class InverseDissipationPotential(nn.Module):
-    def __init__(self, input_dim, hidden_dim):
+    def __init__(self, input_dim, hidden_dims):
         super(InverseDissipationPotential, self).__init__()
-        self.fc1 = nn.Linear(input_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc3 = nn.Linear(hidden_dim, 1)
+        self.layers = nn.ModuleList()
+        for i in range(len(hidden_dims)):
+            in_dim = input_dim if i == 0 else hidden_dims[i - 1]
+            out_dim = hidden_dims[i]
+            self.layers.append(nn.Linear(in_dim, out_dim))
+        self.output_layer = nn.Linear(hidden_dims[-1], 1)
         self.activation = ReLU2()
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
         x = torch.cat((p, q, m_features), dim=-1)
-        x = self.activation(self.fc1(x))
-        x = self.activation(self.fc2(x))
-        potential = self.fc3(x)
+        for layer in self.layers:
+            x = self.activation(layer(x))
+        potential = self.output_layer(x)
         return potential.squeeze(-1)
 
     def compute_derivative(self, p, q, m_features):
