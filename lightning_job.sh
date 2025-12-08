@@ -32,7 +32,7 @@ args=(
 	--encoder_batch_size 1000 
 	--encoder_lr 0.001 
 	--material_model m_dependent_b 
-	--hidden_dim 200
+	--hidden_dim $2
 	--epochs 2000
 	--lr 0.001 
 	--batch_size 200 
