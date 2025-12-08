@@ -49,7 +49,7 @@ class LitCustomModule(L.LightningModule):
             "frequency": 1,
         }
 
-        return [optimizer], [scheduler_config]
+        return [optimizer]
 
     def on_train_epoch_end(self):
         self.log_dict(self.train_metrics.compute())

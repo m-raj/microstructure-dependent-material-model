@@ -10,13 +10,13 @@ class EnergyFunction(nn.Module):
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = nn.Linear(hidden_dim, hidden_dim)
         self.fc4 = nn.Linear(hidden_dim, 1)
-        self.activation = nn.Softplus(beta=0.1, threshold=20)
+        self.activation = nn.Softplus(beta=0.05, threshold=20)
 
     def forward(self, u, v, m_features):
         x = torch.cat((u, v, m_features), dim=-1)
-        x = torch.activation(self.fc1(x))
-        x = torch.activation(self.fc2(x))
-        x = torch.activation(self.fc3(x))
+        x = self.activation(self.fc1(x))
+       # x = self.activation(self.fc2(x))
+       # x = self.activation(self.fc3(x))
         energy = self.fc4(x)
         return energy.squeeze(-1)
 
@@ -36,14 +36,14 @@ class InverseDissipationPotential(nn.Module):
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = nn.Linear(hidden_dim, hidden_dim)
         self.fc4 = nn.Linear(hidden_dim, 1)
-        self.activation = nn.Softplus(beta=0.1, threshold=20)
+        self.activation = nn.Softplus(beta=0.05, threshold=20)
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
         x = torch.cat((p, q, m_features), dim=-1)
-        x = torch.activation(self.fc1(x))
-        x = torch.activation(self.fc2(x))
-        x = torch.activation(self.fc3(x))
+        x = self.activation(self.fc1(x))
+       # x = self.activation(self.fc2(x))
+       # x = self.activation(self.fc3(x))
         potential = self.fc4(x)
         return potential.squeeze(-1)
 

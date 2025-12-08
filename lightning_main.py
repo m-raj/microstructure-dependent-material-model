@@ -185,12 +185,15 @@ if __name__ == "__main__":
         max_epochs=epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
         devices=1,
-        callbacks=[model_checkpoint, lr_monitor, early_stopping],
+        callbacks=[model_checkpoint, lr_monitor],
         logger=wandb_logger,
         inference_mode=False,
     )
 
     trainer.fit(lit, train_dataloader, val_dataloader)
+
+    if early_stopping.stopping_reason_message:
+        print(f"Details: {early_stopping.stopping_reason_message}")
 
     trainer.test(lit, test_dataloader)
 
