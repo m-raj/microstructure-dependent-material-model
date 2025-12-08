@@ -41,9 +41,12 @@ class LitCustomModule(L.LightningModule):
 
         scheduler_config = {
             "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
-                optimizer, mode="min", factor=0.5, patience=5
+                optimizer, factor=0.5, patience=20
             ),
             "monitor": self.name + "val_mse",
+            "name": self.name + "_lr",
+            "interval": "epoch",
+            "frequency": 1,
         }
 
         return [optimizer], [scheduler_config]
