@@ -3,16 +3,27 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class ReLU2(nn.Module):
+    def __init__(self):
+        super(ReLU2, self).__init__()
+
+    def forward(self, x):
+        return torch.square(F.relu(x))
+
+
 class EnergyFunction(nn.Module):
     def __init__(self, input_dim, hidden_dim):
         super(EnergyFunction, self).__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, 1)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, 1)
+        self.activation = ReLU2()
 
     def forward(self, u, v, m_features):
         x = torch.cat((u, v, m_features), dim=-1)
-        x = torch.square(F.relu(self.fc1(x)))
-        energy = self.fc2(x)
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        energy = self.fc3(x)
         return energy.squeeze(-1)
 
     def compute_derivative(self, u, v, m_features):
@@ -28,13 +39,16 @@ class InverseDissipationPotential(nn.Module):
     def __init__(self, input_dim, hidden_dim):
         super(InverseDissipationPotential, self).__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, 1)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, 1)
+        self.activation = ReLU2()
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
         x = torch.cat((p, q, m_features), dim=-1)
-        x = torch.square(F.relu(self.fc1(x)))
-        potential = self.fc2(x)
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        potential = self.fc3(x)
         return potential.squeeze(-1)
 
     def compute_derivative(self, p, q, m_features):
