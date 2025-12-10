@@ -77,7 +77,7 @@ class LitVMM(LitCustomModule):
     def training_step(self, batch):
         x, y = batch
         y_hat, _ = self.model(*x)
-        loss = self.loss(y_hat, y, reduction="mean")
+        loss = self.loss(y_hat, y)
         rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
         self.train_metrics["mse"].update(loss)
         self.train_metrics["mre"].update(rel_error)
