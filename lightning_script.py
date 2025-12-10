@@ -70,7 +70,7 @@ class LitVMM(LitCustomModule):
 
     def loss(self, y_hat, y):
         den = torch.square(y) + 1e-6
-        num = F.mse_loss(y_hat, y, reduction=None)
+        num = F.mse_loss(y_hat, y, reduction="none")
         loss = torch.mean(num / den)
         return loss
 
