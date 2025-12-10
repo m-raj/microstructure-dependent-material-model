@@ -68,10 +68,15 @@ class LitVMM(LitCustomModule):
     def __init__(self, model, name):
         super().__init__(model, name)
 
+    def loss(self, y_hat, y):
+        weights = 1 / (torch.square(y) + 1e-6)
+        loss = F.mse_loss(y_hat, y, reduction="mean", weight=weights)
+        return loss
+
     def training_step(self, batch):
         x, y = batch
         y_hat, _ = self.model(*x)
-        loss = F.mse_loss(y_hat, y, reduction="mean")
+        loss = self.loss(y_hat, y, reduction="mean")
         rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
         self.train_metrics["mse"].update(loss)
         self.train_metrics["mre"].update(rel_error)
@@ -81,17 +86,17 @@ class LitVMM(LitCustomModule):
         with torch.set_grad_enabled(True):
             x, y = batch
             y_hat, _ = self.model(*x)
-            loss = F.mse_loss(y_hat, y)
+            loss = self.loss(y_hat, y)
             rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
             self.val_metrics["mse"].update(loss)
             self.val_metrics["mre"].update(rel_error)
         return loss
 
     def test_step(self, batch):
-        with torch.set_grad_enabled(True):    
+        with torch.set_grad_enabled(True):
             x, y = batch
             y_hat, _ = self.model(*x)
-            loss = F.mse_loss(y_hat, y)
+            loss = self.loss(y_hat, y)
             rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
             self.test_metrics["mse"].update(loss)
             self.test_metrics["mre"].update(rel_error)
