@@ -69,8 +69,9 @@ class LitVMM(LitCustomModule):
         super().__init__(model, name)
 
     def loss(self, y_hat, y):
-        weights = 1 / (torch.square(y) + 1e-6)
-        loss = F.mse_loss(y_hat, y, reduction="mean", weight=weights)
+        den = torch.square(y) + 1e-6
+        num = F.mse_loss(y_hat, y, reduction="None")
+        loss = torch.mean(num / den)
         return loss
 
     def training_step(self, batch):
