@@ -53,9 +53,9 @@ class InverseDissipationPotential(nn.Module):
     def __init__(self, input_dim, hidden_dims):
         super(InverseDissipationPotential, self).__init__()
         self.nu0 = nn.Sequential(
-            nn.Linear(input_dim[0], hidden_dims[0]),
+            nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
-            nn.Linear(hidden_dims[0], 1),
+            nn.Linear(hidden_dims[0], input_dim[0]),
         )
 
         self.BbyA = nn.Sequential(
