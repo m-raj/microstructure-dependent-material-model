@@ -31,7 +31,7 @@ args=(
 	--encoder_epochs 1100 
 	--encoder_batch_size 1000 
 	--encoder_lr 0.001 
-	--material_model m_dependent_b 
+	--material_model m_dependent_b_decomposition 
 	--hidden_dim $2
 	--epochs 2000
 	--lr 0.001 
