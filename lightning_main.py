@@ -183,7 +183,11 @@ if __name__ == "__main__":
         mode="min",
     )
 
-    lit = LitVMM(vmm, name="vmm_")
+    lit = LitVMM(
+        vmm,
+        name="vmm_",
+        loss_type=args.loss_type,
+    )
     trainer = lp.Trainer(
         max_epochs=epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu",

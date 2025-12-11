@@ -65,13 +65,21 @@ class LitCustomModule(L.LightningModule):
 
 
 class LitVMM(LitCustomModule):
-    def __init__(self, model, name):
+    def __init__(self, model, name, loss_type):
         super().__init__(model, name)
+        self.loss_type = loss_type
 
     def loss(self, y_hat, y):
-        den = torch.square(y) + 1e-6
-        num = F.mse_loss(y_hat, y, reduction="none")
-        loss = torch.mean(num / den)
+        if self.loss_type == "mse":
+            loss = F.mse_loss(y_hat, y, reduction="mean")
+            return loss
+        if self.loss_type == "mae":
+            loss = F.l1_loss(y_hat, y, reduction="mean")
+            return loss
+        elif self.loss_type == "weighted_mse":
+            den = torch.square(y) + 1e-6
+            num = F.mse_loss(y_hat, y, reduction="none")
+            loss = torch.mean(num / den)
         return loss
 
     def training_step(self, batch):

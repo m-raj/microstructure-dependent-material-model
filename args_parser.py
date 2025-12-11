@@ -78,4 +78,6 @@ def parse_args():
         "--niv", type=int, default=1, help="Number of internal variables"
     )
 
+    parser.add_argument("--loss_type", type=str, default="mse", help="Time step size")
+
     return parser.parse_args()
