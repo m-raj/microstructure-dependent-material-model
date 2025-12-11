@@ -26,7 +26,7 @@ args=(
 #	--pca 
 #	--encoder_path encoder_path
 	--data_path hmc.txt
-	--encoder_latent_dim 15 
+	--encoder_latent_dim 50 
 	--encoder_hidden_dim 200
 	--encoder_epochs 1100 
 	--encoder_batch_size 1000 
