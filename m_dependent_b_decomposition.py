@@ -31,7 +31,7 @@ class EnergyFunction(nn.Module):
 
     def forward(self, u, v, m_features):
         energy = 1 / 2 * self.E0(m_features) * u**2 + 1 / 2 * torch.sum(
-            self.A(m_features), (u - v) ** 2, dim=-1, keepdim=True
+            self.A(m_features) * (u - v) ** 2, dim=-1, keepdim=True
         )
 
         # x = torch.cat((u, v, m_features), dim=-1)
@@ -67,7 +67,7 @@ class InverseDissipationPotential(nn.Module):
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
         potential = -1 / 2 * self.nu0(m_features) * p**2 + 1 / 2 * torch.sum(
-            self.BbyA(m_features), q**2, dim=-1, keepdim=True
+            self.BbyA(m_features) * q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
 
