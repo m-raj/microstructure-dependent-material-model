@@ -36,6 +36,7 @@ class EnergyFunction(nn.Module):
             nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
             nn.Linear(hidden_dims[0], input_dim[1]),
+            Square(),
         )
 
     def forward(self, u, v, m_features):
@@ -72,6 +73,7 @@ class InverseDissipationPotential(nn.Module):
             nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
             nn.Linear(hidden_dims[0], input_dim[1]),
+            Square(),
         )
 
     def forward(self, p, q, m_features):
