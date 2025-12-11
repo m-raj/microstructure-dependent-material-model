@@ -13,6 +13,14 @@ class ReLU2(nn.Module):
         return torch.square(F.relu(x))
 
 
+class Square(nn.Module):
+    def __init__(self):
+        super(Square, self).__init__()
+
+    def forward(self, x):
+        return torch.square(x)
+
+
 class EnergyFunction(nn.Module):
     def __init__(self, input_dim, hidden_dims):
         super(EnergyFunction, self).__init__()
@@ -21,6 +29,7 @@ class EnergyFunction(nn.Module):
             nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
             nn.Linear(hidden_dims[0], input_dim[0]),
+            Square(),
         )
 
         self.A = nn.Sequential(
@@ -56,6 +65,7 @@ class InverseDissipationPotential(nn.Module):
             nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
             nn.Linear(hidden_dims[0], input_dim[0]),
+            Square(),
         )
 
         self.BbyA = nn.Sequential(
