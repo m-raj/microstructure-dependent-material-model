@@ -18,21 +18,20 @@ class EnergyFunction(nn.Module):
         super(EnergyFunction, self).__init__()
 
         self.E0 = nn.Sequential(
-            nn.Linear(input_dim - 2, hidden_dims[0]),
+            nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
-            nn.Linear(hidden_dims[0], 1),
+            nn.Linear(hidden_dims[0], input_dim[0]),
         )
 
         self.A = nn.Sequential(
-            nn.Linear(input_dim - 2, hidden_dims[0]),
+            nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
-            nn.Linear(hidden_dims[0], 1),
+            nn.Linear(hidden_dims[0], input_dim[1]),
         )
 
     def forward(self, u, v, m_features):
-        energy = (
-            1 / 2 * self.E0(m_features) * u**2
-            + 1 / 2 * self.A(m_features) * (u - v) ** 2
+        energy = 1 / 2 * self.E0(m_features) * u**2 + 1 / 2 * torch.sum(
+            self.A(m_features), (u - v) ** 2, dim=-1, keepdim=True
         )
 
         # x = torch.cat((u, v, m_features), dim=-1)
@@ -54,21 +53,21 @@ class InverseDissipationPotential(nn.Module):
     def __init__(self, input_dim, hidden_dims):
         super(InverseDissipationPotential, self).__init__()
         self.nu0 = nn.Sequential(
-            nn.Linear(input_dim - 2, hidden_dims[0]),
+            nn.Linear(input_dim[0], hidden_dims[0]),
             ReLU2(),
             nn.Linear(hidden_dims[0], 1),
         )
 
         self.BbyA = nn.Sequential(
-            nn.Linear(input_dim - 2, hidden_dims[0]),
+            nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
-            nn.Linear(hidden_dims[0], 1),
+            nn.Linear(hidden_dims[0], input_dim[1]),
         )
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
-        potential = (
-            -1 / 2 * self.nu0(m_features) * p**2 + 1 / 2 * self.BbyA(m_features) * q**2
+        potential = -1 / 2 * self.nu0(m_features) * p**2 + 1 / 2 * torch.sum(
+            self.BbyA(m_features), q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
 
@@ -93,8 +92,7 @@ class ViscoelasticMaterialModel(nn.Module):
     ):
         super(ViscoelasticMaterialModel, self).__init__()
         self.niv = energy_input_dim[1]
-        self.energy_function = EnergyFunction(sum(energy_input_dim), energy_hidden_dim)
-        dissipation_input_dim = sum(dissipation_input_dim)
+        self.energy_function = EnergyFunction(energy_input_dim, energy_hidden_dim)
         self.dissipation_potential = InverseDissipationPotential(
             dissipation_input_dim, dissipation_hidden_dim
         )
