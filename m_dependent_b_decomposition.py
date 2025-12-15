@@ -18,11 +18,7 @@ class Square(nn.Module):
         super(Square, self).__init__()
 
     def forward(self, x):
-<<<<<<< HEAD
-        return torch.square(x)/40000
-=======
-        return torch.nn.Softplus(beta=0.1)
->>>>>>> bec52c9 (l)
+        return torch.square(x) / 40000
 
 
 class EnergyFunction(nn.Module):
@@ -40,7 +36,7 @@ class EnergyFunction(nn.Module):
             nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
             nn.Linear(hidden_dims[0], input_dim[1]),
-            Square()
+            Square(),
         )
 
     def forward(self, u, v, m_features):
@@ -70,14 +66,14 @@ class InverseDissipationPotential(nn.Module):
             nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
             nn.Linear(hidden_dims[0], input_dim[0]),
-            Square()
+            Square(),
         )
 
         self.BbyA = nn.Sequential(
             nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
             nn.Linear(hidden_dims[0], input_dim[1]),
-            Square()
+            Square(),
         )
 
     def forward(self, p, q, m_features):
