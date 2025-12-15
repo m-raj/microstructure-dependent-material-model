@@ -18,7 +18,11 @@ class Square(nn.Module):
         super(Square, self).__init__()
 
     def forward(self, x):
+<<<<<<< HEAD
         return torch.square(x)/40000
+=======
+        return torch.nn.Softplus(beta=0.1)
+>>>>>>> bec52c9 (l)
 
 
 class EnergyFunction(nn.Module):
