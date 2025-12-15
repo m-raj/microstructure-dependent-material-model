@@ -26,9 +26,9 @@ args=(
 #	--pca 
 #	--encoder_path encoder_path
 	--data_path hmc.txt
-	--encoder_latent_dim 50 
+	--encoder_latent_dim 15
 	--encoder_hidden_dim 200
-	--encoder_epochs 2000 
+	--encoder_epochs 1000 
 	--encoder_batch_size 1000 
 	--encoder_lr 0.001 
 	--material_model m_dependent_b_decomposition 
