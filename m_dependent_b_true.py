@@ -28,12 +28,11 @@ class EnergyFunction(nn.Module):
     def __init__(self, input_dim, hidden_dims):
         super(EnergyFunction, self).__init__()
 
-        # self.E = nn.Sequential(
-        #     nn.Linear(input_dim[2], hidden_dims[0]),
-        #     nn.ReLU(),
-        #     nn.Linear(hidden_dims[0], input_dim[0]),
-        #     nn.ReLU(),
-        # )
+        self.E = nn.Sequential(
+            nn.Linear(input_dim[2], hidden_dims[0]),
+            nn.ReLU(),
+            nn.Linear(hidden_dims[0], input_dim[0]),
+        )
 
         self.B = nn.Sequential(
             nn.Linear(input_dim[2], hidden_dims[0]),
@@ -45,7 +44,7 @@ class EnergyFunction(nn.Module):
     def forward(self, u, v, m_features):
         E_prime, _, m_features = torch.split(m_features, [1, 1, 30], dim=-1)
         energy = (
-            1 / 2 * (E_prime - 1) * u**2
+            1 / 2 * self.E(m_features) * u**2
             + 1 / 2 * (u - v) ** 2
             + 1 / 2 * torch.sum(self.B(m_features) * v**2, dim=-1, keepdim=True)
         )

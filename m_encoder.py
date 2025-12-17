@@ -49,8 +49,8 @@ class JointAutoEncoder(nn.Module):
         x = torch.stack((E, nu), dim=-1)
         latent = self.encoder(x)
         reconstructed = self.decoder(latent)
-        reconstructed = torch.split(reconstructed, [E.shape[-1], nu.shape[-1]], dim=-1)
-        return reconstructed
+        E_recon, nu_recon = torch.split(reconstructed, [1, 1], dim=-1)
+        return E_recon.squeeze(-1), nu_recon.squeeze(-1)
 
     def freeze_encoder(self):
         for param in self.encoder.parameters():
