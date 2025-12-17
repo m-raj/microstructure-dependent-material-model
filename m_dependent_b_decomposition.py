@@ -80,8 +80,8 @@ class InverseDissipationPotential(nn.Module):
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
-        potential = -1 / 2 * self.nu0 * p**2 + 1 / 2 * torch.sum(
-            self.beta * q**2, dim=-1, keepdim=True
+        potential = -1 / 2 * self.nu0(m_features) * p**2 + 1 / 2 * torch.sum(
+            self.beta(m_features) * q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
 
