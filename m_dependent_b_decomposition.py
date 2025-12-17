@@ -73,7 +73,7 @@ class InverseDissipationPotential(nn.Module):
 
         self.beta = nn.Sequential(
             nn.Linear(input_dim[2], hidden_dims[0]),
-            nn.ReLU2(),
+            nn.ReLU(),
             nn.Linear(hidden_dims[0], input_dim[1]),
             nn.ReLU(),
         )
