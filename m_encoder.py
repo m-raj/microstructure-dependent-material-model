@@ -1,13 +1,36 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
+
+
+class BilinearInput(nn.Module):
+    def __init__(self, input_dim1, input_dim2, output_dim):
+        super(BilinearInput, self).__init__()
+        self.parameter = nn.Parameter(torch.randn(input_dim1, input_dim2, output_dim))
+
+    def forward(self, x):
+        """x: (batch_size, input_dim1, input_dim2)"""
+        output = torch.einsum("bij,ijk->bk", x, self.parameter)
+        return output
+
+
+class BilinearOutput(nn.Module):
+    def __init__(self, input_dim, output_dim1, output_dim2):
+        super(BilinearOutput, self).__init__()
+        self.parameter = nn.Parameter(torch.randn(input_dim, output_dim1, output_dim2))
+
+    def forward(self, x):
+        """x: (batch_size, input_dim)"""
+        output = torch.einsum("bi,ijk->bjk", x, self.parameter)
+        return output
 
 
 class JointAutoEncoder(nn.Module):
-    def __init__(self, input_dim, hidden_dims, latent_dim):
+    def __init__(self, input_dims, hidden_dims, latent_dim):
         super(JointAutoEncoder, self).__init__()
 
         self.encoder = nn.Sequential(
-            nn.Linear(input_dim, hidden_dims),
+            BilinearInput(input_dims[0], input_dims[1], hidden_dims),
             nn.ReLU(),
             nn.Linear(hidden_dims, hidden_dims),
             nn.ReLU(),
@@ -18,13 +41,15 @@ class JointAutoEncoder(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dims, hidden_dims),
             nn.ReLU(),
-            nn.Linear(hidden_dims, input_dim),
+            BilinearOutput(hidden_dims, input_dims[0], input_dims[1]),
             nn.Sigmoid(),
         )
 
-    def forward(self, x):
+    def forward(self, E, nu):
+        x = torch.stack((E, nu), dim=-1)
         latent = self.encoder(x)
         reconstructed = self.decoder(latent)
+        reconstructed = torch.split(reconstructed, [E.shape[-1], nu.shape[-1]], dim=-1)
         return reconstructed
 
     def freeze_encoder(self):

@@ -27,16 +27,16 @@ class EnergyFunction(nn.Module):
 
         self.E = nn.Sequential(
             nn.Linear(input_dim[2], hidden_dims[0]),
-            ReLU2(),
+            nn.ReLU(),
             nn.Linear(hidden_dims[0], input_dim[0]),
-            Square(),
+            nn.ReLU,
         )
 
         self.B = nn.Sequential(
             nn.Linear(input_dim[2], hidden_dims[0]),
-            ReLU2(),
+            nn.ReLU(),
             nn.Linear(hidden_dims[0], input_dim[1]),
-            Square(),
+            nn.ReLU(),
         )
 
     def forward(self, u, v, m_features):
@@ -66,16 +66,16 @@ class InverseDissipationPotential(nn.Module):
         super(InverseDissipationPotential, self).__init__()
         self.nu0 = nn.Sequential(
             nn.Linear(input_dim[2], hidden_dims[0]),
-            ReLU2(),
+            nn.ReLU(),
             nn.Linear(hidden_dims[0], input_dim[0]),
-            Square(),
+            nn.ReLU(),
         )
 
         self.beta = nn.Sequential(
             nn.Linear(input_dim[2], hidden_dims[0]),
-            ReLU2(),
+            nn.ReLU2(),
             nn.Linear(hidden_dims[0], input_dim[1]),
-            Square(),
+            nn.ReLU(),
         )
 
     def forward(self, p, q, m_features):
