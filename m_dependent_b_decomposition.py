@@ -25,14 +25,14 @@ class EnergyFunction(nn.Module):
     def __init__(self, input_dim, hidden_dims):
         super(EnergyFunction, self).__init__()
 
-        self.E0 = nn.Sequential(
+        self.E = nn.Sequential(
             nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
             nn.Linear(hidden_dims[0], input_dim[0]),
             Square(),
         )
 
-        self.A = nn.Sequential(
+        self.B = nn.Sequential(
             nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
             nn.Linear(hidden_dims[0], input_dim[1]),
@@ -40,8 +40,10 @@ class EnergyFunction(nn.Module):
         )
 
     def forward(self, u, v, m_features):
-        energy = 1 / 2 * self.E0(m_features) * u**2 + 1 / 2 * torch.sum(
-            self.A(m_features) * (u - v) ** 2, dim=-1, keepdim=True
+        energy = (
+            1 / 2 * self.E(m_features) * u**2
+            + 1 / 2 * (u - v) ** 2
+            + 1 / 2 * self.B(m_features) * v**2
         )
 
         # x = torch.cat((u, v, m_features), dim=-1)
@@ -69,7 +71,7 @@ class InverseDissipationPotential(nn.Module):
             Square(),
         )
 
-        self.BbyA = nn.Sequential(
+        self.beta = nn.Sequential(
             nn.Linear(input_dim[2], hidden_dims[0]),
             ReLU2(),
             nn.Linear(hidden_dims[0], input_dim[1]),
@@ -78,8 +80,8 @@ class InverseDissipationPotential(nn.Module):
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
-        potential = -1 / 2 * self.nu0(m_features) * p**2 + 1 / 2 * torch.sum(
-            self.BbyA(m_features) * q**2, dim=-1, keepdim=True
+        potential = -1 / 2 * self.nu0 * p**2 + 1 / 2 * torch.sum(
+            self.beta * q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
 
@@ -94,13 +96,13 @@ class InverseDissipationPotential(nn.Module):
 class ViscoelasticMaterialModel(nn.Module):
     def __init__(
         self,
-        energy_input_dim,
-        energy_hidden_dim,
-        dissipation_input_dim,
-        dissipation_hidden_dim,
-        E_encoder,
-        nu_encoder,
-        dt,
+        energy_input_dim=None,
+        energy_hidden_dim=None,
+        dissipation_input_dim=None,
+        dissipation_hidden_dim=None,
+        E_encoder=None,
+        nu_encoder=None,
+        dt=None,
     ):
         super(ViscoelasticMaterialModel, self).__init__()
         self.niv = energy_input_dim[1]
@@ -118,7 +120,7 @@ class ViscoelasticMaterialModel(nn.Module):
         x = torch.cat((self.E_encoder(E), self.nu_encoder(nu)), dim=-1)
         return x
 
-    def forward(self, e, e_dot, E, nu):
+    def forward(self, e, e_dot, E=None, nu=None):
         m_features = self.microstructure_encoder(E, nu)
         stress = []
         xi = [
