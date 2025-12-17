@@ -29,7 +29,7 @@ class EnergyFunction(nn.Module):
             nn.Linear(input_dim[2], hidden_dims[0]),
             nn.ReLU(),
             nn.Linear(hidden_dims[0], input_dim[0]),
-            nn.ReLU,
+            nn.ReLU(),
         )
 
         self.B = nn.Sequential(
@@ -43,7 +43,7 @@ class EnergyFunction(nn.Module):
         energy = (
             1 / 2 * self.E(m_features) * u**2
             + 1 / 2 * (u - v) ** 2
-            + 1 / 2 * self.B(m_features) * v**2
+            + 1 / 2 * torch.sum(self.B(m_features) * v**2, dim=-1, keepdim=True)
         )
 
         # x = torch.cat((u, v, m_features), dim=-1)
