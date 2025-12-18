@@ -53,7 +53,7 @@ class ViscoelasticDataset(Dataset):
             self.e[idx].to(self.device),
             self.e_dot[idx].to(self.device),
             self.E[idx].to(self.device),
-            self.nu[idx].to(self.device),
+            1 / self.nu[idx].to(self.device),
         )
         y = self.s[idx].to(self.device)
         return x, y
