@@ -138,7 +138,7 @@ if __name__ == "__main__":
             file = glob.glob(f"{args.encoder_path}/ae_nu*.pth")[0]
             lit_ae_nu.load_state_dict(torch.load(file, weights_only=True))
             trainer_ae_nu.test(lit_ae_nu, test_dataloader)
-            print("No encoder path provided, training from scratch.")
+            print("Encoders loader successfully.")
         else:
             print("No encoder path provided, training from scratch.")
 
