@@ -1,4 +1,5 @@
 import torch
+import glob
 
 # torch.multiprocessing.set_start_method("spawn")
 import importlib, os
@@ -83,62 +84,67 @@ if __name__ == "__main__":
         ae_E = AutoEncoder(
             encoder_input_dim, args.encoder_hidden_dim, args.encoder_latent_dim
         ).to(device)
+        lit_ae_E = LitAutoEncoder(ae_E, name="E_")
+        model_checkpoint = lp.callbacks.ModelCheckpoint(
+            every_n_epochs=100,
+            dirpath=folder,
+            filename="ae_E-{epoch:02d}-{train_rel_error:.4f}",
+            mode="min",
+        )
+        lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
+        early_stopping = lp.callbacks.EarlyStopping(
+            monitor="E_val_mse",
+            patience=20,
+            mode="min",
+        )
+        trainer_ae_E = lp.Trainer(
+            max_epochs=args.encoder_epochs,
+            accelerator="gpu" if torch.cuda.is_available() else "cpu",
+            devices=1,
+            logger=wandb_logger,
+            callbacks=[model_checkpoint, lr_monitor, early_stopping],
+        )
+
         ae_nu = AutoEncoder(
             encoder_input_dim, args.encoder_hidden_dim, args.encoder_latent_dim
         ).to(device)
+        lit_ae_nu = LitAutoEncoder(ae_nu, name="nu_")
+
+        model_checkpoint = lp.callbacks.ModelCheckpoint(
+            every_n_epochs=100,
+            dirpath=folder,
+            filename="ae_nu-{epoch:02d}-{train_rel_error:.4f}",
+            mode="min",
+        )
+        lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
+        early_stopping = lp.callbacks.EarlyStopping(
+            monitor="nu_val_mse",
+            patience=20,
+            mode="min",
+        )
+        trainer_ae_nu = lp.Trainer(
+            max_epochs=args.encoder_epochs,
+            accelerator="gpu" if torch.cuda.is_available() else "cpu",
+            devices=1,
+            logger=wandb_logger,
+            callbacks=[model_checkpoint, lr_monitor, early_stopping],
+        )
+
         if args.encoder_path:
             print("Loading encoder weights from:", args.encoder_path)
-            ae_E.load_state_dict(
-                torch.load(f"{args.encoder_path}/ae_E.pth", weights_only=True)
-            )
-            ae_nu.load_state_dict(
-                torch.load(f"{args.encoder_path}/ae_nu.pth", weights_only=True)
-            )
+            file = glob.glob(f"{args.encoder_path}/ae_E*.pth")[0]
+            lit_ae_E.load_state_dict(torch.load(file, weights_only=True))
+            trainer_ae_E.test(lit_ae_E, test_dataloader)
+            file = glob.glob(f"{args.encoder_path}/ae_nu*.pth")[0]
+            lit_ae_nu.load_state_dict(torch.load(file, weights_only=True))
+            trainer_ae_nu.test(lit_ae_nu, test_dataloader)
+            print("No encoder path provided, training from scratch.")
         else:
             print("No encoder path provided, training from scratch.")
-            lit_ae_E = LitAutoEncoder(ae_E, name="E_")
-            model_checkpoint = lp.callbacks.ModelCheckpoint(
-                every_n_epochs=100,
-                dirpath=folder,
-                filename="ae_E-{epoch:02d}-{train_rel_error:.4f}",
-                mode="min",
-            )
-            lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
-            early_stopping = lp.callbacks.EarlyStopping(
-                monitor="E_val_mse",
-                patience=20,
-                mode="min",
-            )
-            trainer_ae_E = lp.Trainer(
-                max_epochs=args.encoder_epochs,
-                accelerator="gpu" if torch.cuda.is_available() else "cpu",
-                devices=1,
-                logger=wandb_logger,
-                callbacks=[model_checkpoint, lr_monitor, early_stopping],
-            )
+
             trainer_ae_E.fit(lit_ae_E, train_dataloader, val_dataloader)
             trainer_ae_E.test(lit_ae_E, test_dataloader)
 
-            lit_ae_nu = LitAutoEncoder(ae_nu, name="nu_")
-            model_checkpoint = lp.callbacks.ModelCheckpoint(
-                every_n_epochs=100,
-                dirpath=folder,
-                filename="ae_nu-{epoch:02d}-{train_rel_error:.4f}",
-                mode="min",
-            )
-            lr_monitor = lp.callbacks.LearningRateMonitor(logging_interval="epoch")
-            early_stopping = lp.callbacks.EarlyStopping(
-                monitor="nu_val_mse",
-                patience=20,
-                mode="min",
-            )
-            trainer_ae_nu = lp.Trainer(
-                max_epochs=args.encoder_epochs,
-                accelerator="gpu" if torch.cuda.is_available() else "cpu",
-                devices=1,
-                logger=wandb_logger,
-                callbacks=[model_checkpoint, lr_monitor, early_stopping],
-            )
             trainer_ae_nu.fit(lit_ae_nu, train_dataloader, val_dataloader)
             trainer_ae_nu.test(lit_ae_nu, test_dataloader)
 

@@ -67,9 +67,9 @@ class InverseDissipationPotential(nn.Module):
     def __init__(self, input_dim, hidden_dims):
         super(InverseDissipationPotential, self).__init__()
         self.nu0 = nn.Sequential(
-            nn.Linear(input_dim[2] // 2, 20),
+            nn.Linear(input_dim[2], 50),
             nn.ReLU(),
-            nn.Linear(20, input_dim[0]),
+            nn.Linear(50, input_dim[0]),
             CustomActivation(),
         )
 
@@ -84,7 +84,7 @@ class InverseDissipationPotential(nn.Module):
         p.requires_grad_(True)
         _, nu_prime, m_features = torch.split(m_features, [1, 1, 30], dim=-1)
         nu_features = torch.split(m_features, [15, 15], dim=-1)[1]
-        potential = -1 / 2 * self.nu0(nu_features) * p**2 + 1 / 2 * torch.sum(
+        potential = -1 / 2 * self.nu0(m_features) * p**2 + 1 / 2 * torch.sum(
             1 * q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
