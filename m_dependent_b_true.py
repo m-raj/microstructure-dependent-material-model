@@ -29,9 +29,9 @@ class EnergyFunction(nn.Module):
         super(EnergyFunction, self).__init__()
 
         self.E = nn.Sequential(
-            nn.Linear(input_dim[2], 50),
-            nn.ReLU(),
-            nn.Linear(50, input_dim[0]),
+            nn.Linear(input_dim[2], hidden_dims[0]),
+            nn.Softplus(),
+            nn.Linear(hidden_dims[0], input_dim[0]),
         )
 
         # self.B = nn.Sequential(
@@ -43,7 +43,7 @@ class EnergyFunction(nn.Module):
     def forward(self, u, v, m_features):
         E_prime, _, m_features = torch.split(m_features, [1, 1, 30], dim=-1)
         energy = (
-            1 / 2 * E_prime * u**2
+            1 / 2 * self.E(m_features) * u**2
             + 1 / 2 * (u - v) ** 2
             # + 1 / 2 * torch.sum(10 * v**2, dim=-1, keepdim=True)
         )
@@ -66,10 +66,10 @@ class EnergyFunction(nn.Module):
 class InverseDissipationPotential(nn.Module):
     def __init__(self, input_dim, hidden_dims):
         super(InverseDissipationPotential, self).__init__()
-        self.nu0 = nn.Sequential(
-            nn.Linear(input_dim[2], 50),
-            nn.ReLU(),
-            nn.Linear(50, input_dim[0]),
+        self.nu = nn.Sequential(
+            nn.Linear(input_dim[2], hidden_dims[0]),
+            nn.Softplus(),
+            nn.Linear(hidden_dims[0], input_dim[0]),
             CustomActivation(),
         )
 
@@ -77,14 +77,14 @@ class InverseDissipationPotential(nn.Module):
             nn.Linear(input_dim[2], hidden_dims[0]),
             nn.Softplus(),
             nn.Linear(hidden_dims[0], input_dim[1]),
-            nn.Softplus(),
+            CustomActivation(),
         )
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
         _, nu_prime, m_features = torch.split(m_features, [1, 1, 30], dim=-1)
         nu_features = torch.split(m_features, [15, 15], dim=-1)[1]
-        potential = -1 / 2 * nu_prime * p**2 + 1 / 2 * torch.sum(
+        potential = -1 / 2 * self.nu(m_features) * p**2 + 1 / 2 * torch.sum(
             self.beta(m_features) * q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
