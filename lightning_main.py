@@ -132,7 +132,8 @@ if __name__ == "__main__":
 
         if args.encoder_path:
             print("Loading encoder weights from:", args.encoder_path)
-            file = glob.glob(f"{args.encoder_path}/ae_E*.pth")[0]
+            print(f"{args.encoder_path}/ae_E*.pth")
+            file = glob.glob(f"{args.encoder_path}/ae_E*.pth")
             lit_ae_E.load_state_dict(torch.load(file, weights_only=True))
             trainer_ae_E.test(lit_ae_E, test_dataloader)
             file = glob.glob(f"{args.encoder_path}/ae_nu*.pth")[0]
