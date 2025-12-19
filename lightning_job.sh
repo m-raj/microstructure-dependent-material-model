@@ -34,7 +34,7 @@ args=(
 	--material_model m_dependent_b_true 
 	--hidden_dim $2
 	--epochs 2000
-	--lr 0.1 
+	--lr 0.001 
 	--batch_size 200 
 	--niv 1
 	--step 50
