@@ -121,22 +121,22 @@ class LitVMM(LitCustomModule):
 
     def on_train_epoch_start(self):
         if self.current_epoch < 100:
-            self.dissipation_potential.beta.requires_grad_(False)
-            self.dissipation_potential.nu.requires_grad_(True)
-            self.energy_function.E.requires_grad_(False)
+            self.model.dissipation_potential.beta.requires_grad_(False)
+            self.model.dissipation_potential.nu.requires_grad_(True)
+            self.model.energy_function.E.requires_grad_(False)
         elif self.current_epoch < 200:
-            self.dissipation_potential.beta.requires_grad_(False)
-            self.dissipation_potential.nu.requires_grad_(False)
-            self.energy_function.E.requires_grad_(True)
+            self.model.dissipation_potential.beta.requires_grad_(False)
+            self.model.dissipation_potential.nu.requires_grad_(False)
+            self.model.energy_function.E.requires_grad_(True)
         else:
-            self.dissipation_potential.beta.requires_grad_(True)
-            self.dissipation_potential.nu.requires_grad_(False)
-            self.energy_function.E.requires_grad_(False)
+            self.model.dissipation_potential.beta.requires_grad_(True)
+            self.model.dissipation_potential.nu.requires_grad_(False)
+            self.model.energy_function.E.requires_grad_(False)
         print(
             self.current_epoch,
-            self.dissipation_potential.beta.requires_grad,
-            self.dissipation_potential.nu.requires_grad,
-            self.energy_function.E.requires_grad,
+            self.model.dissipation_potential.beta.requires_grad,
+            self.model.dissipation_potential.nu.requires_grad,
+            self.model.energy_function.E.requires_grad,
         )
 
     def test_step(self, batch):
