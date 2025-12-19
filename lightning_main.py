@@ -138,7 +138,7 @@ if __name__ == "__main__":
                 torch.load(file[0], weights_only=True)["state_dict"]
             )
             trainer_ae_E.test(lit_ae_E, test_dataloader)
-            file = glob.glob(f"{args.encoder_path}/ae_nu*.cpkt")
+            file = glob.glob(f"{args.encoder_path}/ae_nu*.ckpt")
             print(file)
             lit_ae_nu.load_state_dict(
                 torch.load(file[0], weights_only=True)["state_dict"]
