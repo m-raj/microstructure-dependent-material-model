@@ -72,6 +72,12 @@ if __name__ == "__main__":
     encoder_input_dim = 501
     folder = f"./material_model_run_{args.run_id}/"
 
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    torch.save(args.__dict__ | indices, "{0}/args.pkl".format(folder))
+    os.system("cp *.py {0}/".format(folder))
+    os.system("cp *.txt {0}/".format(folder))
+
     print(args.pca)
     if args.pca:
         print("Using PCA Encoder")
@@ -176,11 +182,6 @@ if __name__ == "__main__":
     ).to(device)
 
     epochs = args.epochs
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    torch.save(args.__dict__ | indices, "{0}/args.pkl".format(folder))
-    os.system("cp *.py {0}/".format(folder))
-    os.system("cp *.txt {0}/".format(folder))
 
     model_checkpoint = lp.callbacks.ModelCheckpoint(
         every_n_epochs=100,
