@@ -200,6 +200,7 @@ if __name__ == "__main__":
         vmm,
         name="vmm_",
         loss_type=args.loss_type,
+        lr=args.lr,
     )
     trainer = lp.Trainer(
         max_epochs=epochs,

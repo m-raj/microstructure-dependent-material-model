@@ -37,17 +37,18 @@ class LitCustomModule(L.LightningModule):
         )
 
     def configure_optimizers(self):
+        print("Custom Module Configuring optimizers...")
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
 
-        scheduler_config = {
-            "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
-                optimizer, factor=0.5, patience=20
-            ),
-            "monitor": self.name + "val_mse",
-            "name": self.name + "_lr",
-            "interval": "epoch",
-            "frequency": 1,
-        }
+        # scheduler_config = {
+        #     "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
+        #         optimizer, factor=0.5, patience=20
+        #     ),
+        #     "monitor": self.name + "val_mse",
+        #     "name": self.name + "_lr",
+        #     "interval": "epoch",
+        #     "frequency": 1,
+        # }
 
         return [optimizer]
 
@@ -65,9 +66,10 @@ class LitCustomModule(L.LightningModule):
 
 
 class LitVMM(LitCustomModule):
-    def __init__(self, model, name, loss_type):
+    def __init__(self, model, name, loss_type, lr=1e-3):
         super().__init__(model, name)
         self.loss_type = loss_type
+        self.lr = lr
 
     def loss(self, y_hat, y):
         if self.loss_type == "mse":
@@ -81,6 +83,22 @@ class LitVMM(LitCustomModule):
             num = F.mse_loss(y_hat, y, reduction="none")
             loss = torch.mean(num / den)
         return loss
+
+    def configure_optimizers(self):
+        print("VMM Module Configuring optimizers...")
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+
+        # scheduler_config = {
+        #     "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
+        #         optimizer, factor=0.5, patience=20
+        #     ),
+        #     "monitor": self.name + "val_mse",
+        #     "name": self.name + "_lr",
+        #     "interval": "epoch",
+        #     "frequency": 1,
+        # }
+
+        return [optimizer]
 
     def training_step(self, batch):
         x, y = batch
@@ -100,6 +118,26 @@ class LitVMM(LitCustomModule):
             self.val_metrics["mse"].update(loss)
             self.val_metrics["mre"].update(rel_error)
         return loss
+
+    def on_train_epoch_start(self):
+        if self.current_epoch < 100:
+            self.dissipation_potential.beta.requires_grad_(False)
+            self.dissipation_potential.nu.requires_grad_(True)
+            self.energy_function.E.requires_grad_(False)
+        elif self.current_epoch < 200:
+            self.dissipation_potential.beta.requires_grad_(False)
+            self.dissipation_potential.nu.requires_grad_(False)
+            self.energy_function.E.requires_grad_(True)
+        else:
+            self.dissipation_potential.beta.requires_grad_(True)
+            self.dissipation_potential.nu.requires_grad_(False)
+            self.energy_function.E.requires_grad_(False)
+        print(
+            self.current_epoch,
+            self.dissipation_potential.beta.requires_grad,
+            self.dissipation_potential.nu.requires_grad,
+            self.energy_function.E.requires_grad,
+        )
 
     def test_step(self, batch):
         with torch.set_grad_enabled(True):
