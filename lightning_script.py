@@ -134,9 +134,9 @@ class LitVMM(LitCustomModule):
             self.model.energy_function.E.requires_grad_(False)
         print(
             self.current_epoch,
-            self.model.dissipation_potential.beta.requires_grad,
-            self.model.dissipation_potential.nu.requires_grad,
-            self.model.energy_function.E.requires_grad,
+            self.model.dissipation_potential.beta.requires_grad_,
+            self.model.dissipation_potential.nu.requires_grad_,
+            self.model.energy_function.E.requires_grad_,
         )
 
     def test_step(self, batch):
