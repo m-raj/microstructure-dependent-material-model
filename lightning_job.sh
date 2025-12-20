@@ -24,7 +24,7 @@ args=(
 	--mode online 
 	--device cuda 
 #	--pca 
-	--encoder_path material_model_run_n19
+#	--encoder_path material_model_run_n19
 	--data_path hmc.txt
 	--encoder_latent_dim 15
 	--encoder_hidden_dim 200
