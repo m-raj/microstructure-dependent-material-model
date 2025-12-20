@@ -47,6 +47,9 @@ class ViscoelasticDataset(Dataset):
 
         self.E_stats = torch.load("data/mixture_random_field_process_E_stats.pt")
         self.nu_stats = torch.load("data/mixture_random_field_process_nu_stats.pt")
+        self.onebynu_stats = torch.load(
+            "data/mixture_random_field_process_onebynu_stats.pt"
+        )
         self.onebynu = onebynu
 
     def __len__(self):
@@ -57,7 +60,9 @@ class ViscoelasticDataset(Dataset):
         if not (self.onebynu):
             nu_norm = (nu - self.nu_stats["mean"]) / self.nu_stats["std"]
         else:
-            nu_norm = (1.0 / nu - self.nu_stats["mean"]) / self.nu_stats["std"]
+            nu_norm = (1.0 / nu - self.onebynu_stats["mean"]) / self.onebynu_stats[
+                "std"
+            ]
         return E_norm, nu_norm
 
     def __getitem__(self, idx):
