@@ -122,15 +122,15 @@ class LitVMM(LitCustomModule):
     def on_train_epoch_start(self):
         if self.current_epoch < 100:
             self.model.dissipation_potential.beta.requires_grad_(True)
-            self.model.dissipation_potential.nu.requires_grad_(False)
+            self.model.dissipation_potential.nu.requires_grad_(True)
             self.model.energy_function.E.requires_grad_(True)
         elif self.current_epoch < 200:
             self.model.dissipation_potential.beta.requires_grad_(True)
-            self.model.dissipation_potential.nu.requires_grad_(False)
+            self.model.dissipation_potential.nu.requires_grad_(True)
             self.model.energy_function.E.requires_grad_(True)
         else:
             self.model.dissipation_potential.beta.requires_grad_(True)
-            self.model.dissipation_potential.nu.requires_grad_(False)
+            self.model.dissipation_potential.nu.requires_grad_(True)
             self.model.energy_function.E.requires_grad_(True)
 
     def test_step(self, batch):
