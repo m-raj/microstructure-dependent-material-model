@@ -29,7 +29,7 @@ class LossFunction(torch.nn.Module):
 
 
 class ViscoelasticDataset(Dataset):
-    def __init__(self, data_path, step, device="cpu", encoder=False):
+    def __init__(self, data_path, step, onebynu=False, device="cpu", encoder=False):
 
         with open(data_path, "rb") as f:
             data = pickle.load(f)
@@ -45,15 +45,26 @@ class ViscoelasticDataset(Dataset):
 
         self.encoder = encoder
 
+        self.E_stats = torch.load("data/mixture_random_field_process_E_stats.pt")
+        self.nu_stats = torch.load("data/mixture_random_field_process_nu_stats.pt")
+        self.onebynu = onebynu
+
     def __len__(self):
         return len(self.e)
+
+    def transform(self, E, nu):
+        E_norm = (E - self.E_stats["mean"]) / self.E_stats["std"]
+        if not (self.onebynu):
+            nu_norm = (nu - self.nu_stats["mean"]) / self.nu_stats["std"]
+        else:
+            nu_norm = (1.0 / nu - self.nu_stats["mean"]) / self.nu_stats["std"]
+        return E_norm, nu_norm
 
     def __getitem__(self, idx):
         x = (
             self.e[idx].to(self.device),
             self.e_dot[idx].to(self.device),
-            self.E[idx].to(self.device),
-            self.nu[idx].to(self.device),
+            *self.transform(self.E[idx], self.nu[idx]),
         )
         y = self.s[idx].to(self.device)
         return x, y
