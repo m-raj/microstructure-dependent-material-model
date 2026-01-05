@@ -7,3 +7,4 @@ __pycache__/
 *.out
 *.cpkt*
 combined_encoding_training/
+*.pt
