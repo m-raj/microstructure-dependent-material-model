@@ -80,4 +80,7 @@ def parse_args():
 
     parser.add_argument("--loss_type", type=str, default="mse", help="Time step size")
 
+    parser.add_argument(
+        "--freeze_encoder", action="store_true", help="Number of internal variables"
+    )
     return parser.parse_args()

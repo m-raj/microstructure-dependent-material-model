@@ -168,8 +168,9 @@ if __name__ == "__main__":
     dissipation_hidden_dim = list(
         map(lambda l: int(l.strip()), args.hidden_dim.strip().split(","))
     )
-    ae_E.freeze_encoder()
-    ae_nu.freeze_encoder()
+    if args.freeze_encoder:
+        ae_E.freeze_encoder()
+        ae_nu.freeze_encoder()
 
     vmm = mm.ViscoelasticMaterialModel(
         energy_input_dim,
