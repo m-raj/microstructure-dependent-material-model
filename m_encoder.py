@@ -3,54 +3,88 @@ import torch.nn.functional as F
 import torch
 
 
-class BilinearInput(nn.Module):
-    def __init__(self, input_dim1, input_dim2, output_dim):
-        super(BilinearInput, self).__init__()
-        self.parameter = nn.Parameter(torch.randn(input_dim1, input_dim2, output_dim))
+class View(nn.Module):
+    def __init__(self, shape):
+        super(View, self).__init__()
+        self.shape = shape
 
     def forward(self, x):
-        """x: (batch_size, input_dim1, input_dim2)"""
-        output = torch.einsum("bij,ijk->bk", x, self.parameter)
-        return output
+        return x.view(x.size(0), *self.shape)
 
 
-class BilinearOutput(nn.Module):
-    def __init__(self, input_dim, output_dim1, output_dim2):
-        super(BilinearOutput, self).__init__()
-        self.parameter = nn.Parameter(torch.randn(input_dim, output_dim1, output_dim2))
+class Pad(nn.Module):
+    def __init__(self, padding):
+        super(Pad, self).__init__()
+        self.padding = padding
 
     def forward(self, x):
-        """x: (batch_size, input_dim)"""
-        output = torch.einsum("bi,ijk->bjk", x, self.parameter)
-        return output
+        return nn.functional.pad(x, self.padding)
 
 
 class JointAutoEncoder(nn.Module):
-    def __init__(self, input_dims, hidden_dims, latent_dim):
+    def __init__(self, width, channels, latent_dim, kernel_size=3):
         super(JointAutoEncoder, self).__init__()
+        self.encoder = nn.ModuleList()
 
-        self.encoder = nn.Sequential(
-            BilinearInput(input_dims[0], input_dims[1], hidden_dims),
-            nn.ReLU(),
-            nn.Linear(hidden_dims, hidden_dims),
-            nn.ReLU(),
-            nn.Linear(hidden_dims, latent_dim),
+        self.encoder.append(Pad((5, 6)))  # Pad input to handle odd lengths
+        for i in range(len(channels) - 1):
+            self.encoder.append(
+                nn.Sequential(
+                    nn.Conv1d(
+                        channels[i],
+                        channels[i + 1],
+                        kernel_size,
+                        padding=kernel_size // 2,
+                    ),
+                    nn.BatchNorm1d(channels[i + 1]),
+                    nn.ReLU(),
+                    nn.MaxPool1d(kernel_size=2),
+                )
+            )
+
+        encoder_bottleneck = nn.Linear(
+            channels[-1] * (width // (2 ** (len(channels) - 1))), latent_dim
         )
-        self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, hidden_dims),
-            nn.ReLU(),
-            nn.Linear(hidden_dims, hidden_dims),
-            nn.ReLU(),
-            BilinearOutput(hidden_dims, input_dims[0], input_dims[1]),
-            nn.Sigmoid(),
+        self.encoder.append(View((-1,)))
+        self.encoder.append(encoder_bottleneck)
+
+        decoder_bottleneck = nn.Linear(
+            latent_dim, channels[-1] * (width // (2 ** (len(channels) - 1)))
         )
 
-    def forward(self, E, nu):
-        x = torch.stack((E, nu), dim=-1)
-        latent = self.encoder(x)
-        reconstructed = self.decoder(latent)
-        E_recon, nu_recon = torch.split(reconstructed, [1, 1], dim=-1)
-        return E_recon.squeeze(-1), nu_recon.squeeze(-1)
+        self.decoder = nn.ModuleList()
+        self.decoder.append(decoder_bottleneck)
+        self.decoder.append(View((channels[-1], width // (2 ** (len(channels) - 1)))))
+        for i in range(len(channels) - 1, 1, -1):
+            self.decoder.append(
+                nn.Sequential(
+                    nn.Upsample(scale_factor=2),
+                    nn.Conv1d(
+                        channels[i],
+                        channels[i - 1],
+                        kernel_size,
+                        padding=kernel_size // 2,
+                    ),
+                    nn.BatchNorm1d(channels[i - 1]),
+                    nn.ReLU(),
+                )
+            )
+
+        self.decoder.append(
+            nn.Sequential(
+                nn.Upsample(scale_factor=2),
+                nn.Conv1d(
+                    channels[1], channels[0], kernel_size, padding=kernel_size // 2
+                ),
+            )
+        )
+
+        self.encoder = nn.Sequential(*self.encoder)
+        self.decoder = nn.Sequential(*self.decoder)
+
+    def forward(self, x):
+        x_recon = self.decoder(self.encoder(x))
+        return x_recon[:, :, 6:-5]
 
     def freeze_encoder(self):
         for param in self.encoder.parameters():
