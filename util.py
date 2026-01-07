@@ -56,14 +56,9 @@ class ViscoelasticDataset(Dataset):
         return len(self.e)
 
     def transform(self, E, nu):
-        E_norm = (E - self.E_stats["mean"]) / self.E_stats["std"]
-        if not (self.onebynu):
-            nu_norm = (nu - self.nu_stats["mean"]) / self.nu_stats["std"]
-        else:
-            nu_norm = (1.0 / nu - self.onebynu_stats["mean"]) / self.onebynu_stats[
-                "std"
-            ]
-        return E_norm, nu_norm
+        feature1 = E / torch.square(nu)
+        feature2 = 1 / nu
+        return feature1, feature2
 
     def __getitem__(self, idx):
         x = (
