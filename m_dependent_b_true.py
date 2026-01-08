@@ -21,7 +21,7 @@ class CustomActivation(nn.Module):
         super(CustomActivation, self).__init__()
 
     def forward(self, x):
-        return torch.square(x) / 40000
+        return torch.square(F.relu(x))
 
 
 class EnergyFunction(nn.Module):
@@ -88,12 +88,12 @@ class InverseDissipationPotential(nn.Module):
             nn.Linear(32, 1),
         )
 
-        self.beta = nn.Sequential(
-            nn.Linear(1002, hidden_dims[0]),
-            nn.Softplus(),
-            nn.Linear(hidden_dims[0], input_dim[1]),
-            CustomActivation(),
-        )
+        # self.beta = nn.Sequential(
+        #     nn.Linear(1002, hidden_dims[0]),
+        #     nn.Softplus(),
+        #     nn.Linear(hidden_dims[0], input_dim[1]),
+        #     CustomActivation(),
+        # )
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
