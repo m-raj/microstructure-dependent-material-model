@@ -29,7 +29,7 @@ class EnergyFunction(nn.Module):
         super(EnergyFunction, self).__init__()
 
         self.E = nn.Sequential(
-            nn.Linear(input_dim[2], hidden_dims[0]),
+            nn.Linear(1002, hidden_dims[0]),
             nn.Softplus(),
             nn.Linear(hidden_dims[0], input_dim[0]),
         )
@@ -43,7 +43,7 @@ class EnergyFunction(nn.Module):
     def forward(self, u, v, m_features):
         # E_prime, _, m_features = torch.split(m_features, [1, 1, 30], dim=-1)
         energy = (
-            1 / 2 * torch.exp(self.E(m_features)) * u**2
+            1 / 2 * self.E(m_features) * u**2
             + 1 / 2 * (u - v) ** 2
             # + 1 / 2 * torch.sum(10 * v**2, dim=-1, keepdim=True)
         )
@@ -67,14 +67,13 @@ class InverseDissipationPotential(nn.Module):
     def __init__(self, input_dim, hidden_dims):
         super(InverseDissipationPotential, self).__init__()
         self.nu = nn.Sequential(
-            nn.Linear(input_dim[2] // 2, hidden_dims[0]),
+            nn.Linear(501, hidden_dims[0]),
             nn.Softplus(),
             nn.Linear(hidden_dims[0], input_dim[0]),
-            CustomActivation(),
         )
 
         self.beta = nn.Sequential(
-            nn.Linear(input_dim[2], hidden_dims[0]),
+            nn.Linear(1002, hidden_dims[0]),
             nn.Softplus(),
             nn.Linear(hidden_dims[0], input_dim[1]),
             CustomActivation(),
@@ -83,7 +82,7 @@ class InverseDissipationPotential(nn.Module):
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
         _, nu_features = torch.split(m_features, [501, 501], dim=-1)
-        potential = -1 / 2 * torch.exp(self.nu(nu_features)) * p**2 + 1 / 2 * torch.sum(
+        potential = -1 / 2 * 1/self.nu(nu_features) * p**2 + 1 / 2 * torch.sum(
             self.beta(m_features) * q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
