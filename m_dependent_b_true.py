@@ -41,7 +41,7 @@ class EnergyFunction(nn.Module):
         # )
 
     def forward(self, u, v, m_features):
-        E_prime, _, m_features = torch.split(m_features, [1, 1, 30], dim=-1)
+        # E_prime, _, m_features = torch.split(m_features, [1, 1, 30], dim=-1)
         energy = (
             1 / 2 * torch.exp(self.E(m_features)) * u**2
             + 1 / 2 * (u - v) ** 2
@@ -67,7 +67,7 @@ class InverseDissipationPotential(nn.Module):
     def __init__(self, input_dim, hidden_dims):
         super(InverseDissipationPotential, self).__init__()
         self.nu = nn.Sequential(
-            nn.Linear(input_dim[2]//2, hidden_dims[0]),
+            nn.Linear(input_dim[2] // 2, hidden_dims[0]),
             nn.Softplus(),
             nn.Linear(hidden_dims[0], input_dim[0]),
             CustomActivation(),
@@ -82,8 +82,7 @@ class InverseDissipationPotential(nn.Module):
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
-        _, nu_prime, m_features = torch.split(m_features, [1, 1, 30], dim=-1)
-        nu_features = torch.split(m_features, [15, 15], dim=-1)[1]
+        _, nu_features = torch.split(m_features, [501, 501], dim=-1)
         potential = -1 / 2 * torch.exp(self.nu(nu_features)) * p**2 + 1 / 2 * torch.sum(
             self.beta(m_features) * q**2, dim=-1, keepdim=True
         )
@@ -122,7 +121,7 @@ class ViscoelasticMaterialModel(nn.Module):
         self.nu_encoder = nu_encoder
 
     def microstructure_encoder(self, E, nu):
-        x = torch.cat((self.tf(E, nu), self.E_encoder(E), self.nu_encoder(nu)), dim=-1)
+        x = torch.cat((E, nu), dim=-1)
         return x
 
     def forward(self, e, e_dot, E=None, nu=None):
