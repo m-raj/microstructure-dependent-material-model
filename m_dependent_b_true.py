@@ -72,7 +72,10 @@ class EnergyFunction(nn.Module):
         u.requires_grad_(True)
         energy = self(u, v, m_features)
         grad_u, grad_v = torch.autograd.grad(
-            energy.sum(), (u, v), create_graph=True, retain_graph=True
+            self.B(m_features) * energy.sum(),
+            (u, v),
+            create_graph=True,
+            retain_graph=True,
         )
         return grad_u, grad_v
 
@@ -105,7 +108,7 @@ class InverseDissipationPotential(nn.Module):
         p.requires_grad_(True)
         E_prime, nu_prime, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
         potential = -1 / 2 * nu_prime * p**2 + 1 / 2 * torch.sum(
-            q**2, dim=-1, keepdim=True
+            self.beta(nu_prime) * q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
 
