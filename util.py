@@ -56,9 +56,11 @@ class ViscoelasticDataset(Dataset):
         return len(self.e)
 
     def transform(self, E, nu):
-        feature1 = E / torch.square(nu)
-        feature2 = 1 / nu
-        return feature1, feature2
+        # feature1 = E / torch.square(nu)
+        # feature2 = 1 / nu
+        # return feature1, feature2
+
+        return E, nu
 
     def __getitem__(self, idx):
         x = (

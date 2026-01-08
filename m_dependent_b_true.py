@@ -10,8 +10,12 @@ class TrueFeatures(nn.Module):
         super(TrueFeatures, self).__init__()
 
     def forward(self, feature1, feature2):
-        nu_prime = torch.mean(feature2, dim=1, keepdim=True).pow(-1)
-        E_prime = torch.mean(feature1, dim=1, keepdim=True) * nu_prime**2
+
+        nu_prime = torch.mean(feature2.pow(-1), keepdim=True).pow(-1)
+        E_prime = torch.mean(feature1 / feature2.pow(2), keepdim=True) * nu_prime**2
+
+        # nu_prime = torch.mean(feature2, dim=1, keepdim=True).pow(-1)
+        # E_prime = torch.mean(feature1, dim=1, keepdim=True) * nu_prime**2
         output = torch.cat((E_prime, nu_prime), dim=-1)
         return output
 
