@@ -53,7 +53,7 @@ class EnergyFunction(nn.Module):
         energy = (
             1 / 2 * E_prime * u**2
             + 1 / 2 * (u - v) ** 2
-            + 1 / 2 * torch.sum(self.B(m_features) * v**2, dim=-1, keepdim=True)
+            + 1 / 2 * torch.sum(v**2, dim=-1, keepdim=True)
         )
 
         # x = torch.cat((u, v, m_features), dim=-1)
@@ -99,7 +99,7 @@ class InverseDissipationPotential(nn.Module):
         p.requires_grad_(True)
         E_prime, nu_prime, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
         potential = -1 / 2 * nu_prime * p**2 + 1 / 2 * torch.sum(
-            self.beta(m_features) * q**2, dim=-1, keepdim=True
+            q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
 
