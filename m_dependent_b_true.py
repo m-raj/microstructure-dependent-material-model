@@ -9,9 +9,9 @@ class TrueFeatures(nn.Module):
     def __init__(self):
         super(TrueFeatures, self).__init__()
 
-    def forward(self, E, nu):
-        nu_prime = torch.mean(1 / nu, dim=1, keepdim=True).pow(-1)
-        E_prime = torch.mean(E / nu**2, dim=1, keepdim=True) * nu_prime**2
+    def forward(self, feature1, feature2):
+        nu_prime = torch.mean(feature2, dim=1, keepdim=True).pow(-1)
+        E_prime = torch.mean(feature1, dim=1, keepdim=True) * nu_prime**2
         output = torch.cat((E_prime, nu_prime), dim=-1)
         return output
 
@@ -49,9 +49,9 @@ class EnergyFunction(nn.Module):
         # )
 
     def forward(self, u, v, m_features):
-        # E_prime, _, m_features = torch.split(m_features, [1, 1, 30], dim=-1)
+        E_prime, _, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
         energy = (
-            1 / 2 * self.E(m_features) * u**2
+            1 / 2 * torch.log(self.E(m_features)) * u**2
             + 1 / 2 * (u - v) ** 2
             # + 1 / 2 * torch.sum(10 * v**2, dim=-1, keepdim=True)
         )
@@ -97,10 +97,11 @@ class InverseDissipationPotential(nn.Module):
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
+        _, nu_prime, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
         _, nu_features = torch.split(m_features, [501, 501], dim=-1)
-        potential = -1 / 2 * 1 / self.nu(nu_features) * p**2 + 1 / 2 * torch.sum(
-            q**2, dim=-1, keepdim=True
-        )
+        potential = 1 / 2 * torch.log(
+            self.nu(nu_features)
+        ) * p**2 + 1 / 2 * torch.sum(q**2, dim=-1, keepdim=True)
         return potential.squeeze(-1)
 
     def compute_derivative(self, p, q, m_features):
@@ -136,7 +137,8 @@ class ViscoelasticMaterialModel(nn.Module):
         self.nu_encoder = nu_encoder
 
     def microstructure_encoder(self, E, nu):
-        x = torch.cat((E, nu), dim=-1)
+        tf = self.tf(E, nu)
+        x = torch.cat((tf, E, nu), dim=-1)
         return x
 
     def forward(self, e, e_dot, E=None, nu=None):
