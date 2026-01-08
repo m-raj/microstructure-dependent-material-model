@@ -99,7 +99,7 @@ class InverseDissipationPotential(nn.Module):
         p.requires_grad_(True)
         _, nu_features = torch.split(m_features, [501, 501], dim=-1)
         potential = -1 / 2 * 1 / self.nu(nu_features) * p**2 + 1 / 2 * torch.sum(
-            self.beta(m_features) * q**2, dim=-1, keepdim=True
+            q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
 
