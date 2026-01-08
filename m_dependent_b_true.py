@@ -42,18 +42,18 @@ class EnergyFunction(nn.Module):
             nn.Linear(32, 1),
         )
 
-        # self.B = nn.Sequential(
-        #     nn.Linear(input_dim[2], hidden_dims[0]),
-        #     CustomActivation(),
-        #     nn.Linear(hidden_dims[0], input_dim[1]),
-        # )
+        self.B = nn.Sequential(
+            nn.Linear(1002, hidden_dims[0]),
+            nn.ReLU(),
+            nn.Linear(hidden_dims[0], input_dim[1]),
+        )
 
     def forward(self, u, v, m_features):
         # E_prime, _, m_features = torch.split(m_features, [1, 1, 30], dim=-1)
         energy = (
-            1 / 2 * torch.exp(self.E(m_features)) * u**2
+            1 / 2 * self.E(m_features) * u**2
             + 1 / 2 * (u - v) ** 2
-            # + 1 / 2 * torch.sum(10 * v**2, dim=-1, keepdim=True)
+            + 1 / 2 * torch.sum(self.B(m_features) * v**2, dim=-1, keepdim=True)
         )
 
         # x = torch.cat((u, v, m_features), dim=-1)
@@ -88,18 +88,17 @@ class InverseDissipationPotential(nn.Module):
             nn.Linear(32, 1),
         )
 
-        # self.beta = nn.Sequential(
-        #     nn.Linear(1002, hidden_dims[0]),
-        #     nn.Softplus(),
-        #     nn.Linear(hidden_dims[0], input_dim[1]),
-        #     CustomActivation(),
-        # )
+        self.beta = nn.Sequential(
+            nn.Linear(1002, hidden_dims[0]),
+            nn.Softplus(),
+            nn.Linear(hidden_dims[0], input_dim[1]),
+        )
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
         _, nu_features = torch.split(m_features, [501, 501], dim=-1)
         potential = -1 / 2 * 1 / self.nu(nu_features) * p**2 + 1 / 2 * torch.sum(
-            q**2, dim=-1, keepdim=True
+            self.beta(m_features) * q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
 
