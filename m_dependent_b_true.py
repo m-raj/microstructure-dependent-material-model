@@ -92,6 +92,7 @@ class InverseDissipationPotential(nn.Module):
             nn.Linear(1002, hidden_dims[0]),
             nn.Softplus(),
             nn.Linear(hidden_dims[0], input_dim[1]),
+            nn.Softplus(),
         )
 
     def forward(self, p, q, m_features):
