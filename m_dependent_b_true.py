@@ -57,7 +57,7 @@ class EnergyFunction(nn.Module):
     def forward(self, u, v, m_features):
         E_prime, _, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
         energy = (
-            1 / 2 * E_prime * u**2
+            1 / 2 * (E_prime - 1) * u**2
             + 1 / 2 * (u - v) ** 2
             + 1 / 2 * torch.sum(self.B(m_features) * v**2, dim=-1, keepdim=True)
         )
