@@ -72,7 +72,7 @@ class EnergyFunction(nn.Module):
         u.requires_grad_(True)
         energy = self(u, v, m_features)
         grad_u, grad_v = torch.autograd.grad(
-            self.B(m_features) * energy.sum(),
+            energy.sum(),
             (u, v),
             create_graph=True,
             retain_graph=True,
