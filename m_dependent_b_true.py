@@ -22,14 +22,6 @@ class TrueFeatures(nn.Module):
         return output
 
 
-def init_weights(m):
-    if isinstance(m, nn.Linear):
-        # Initialize linear layers
-        nn.init.xavier_uniform_(m.weight)
-        if m.bias is not None:
-            m.bias.data.fill_(0.01)
-
-
 class CustomActivation(nn.Module):
     def __init__(self):
         super(CustomActivation, self).__init__()
@@ -63,13 +55,15 @@ class EnergyFunction(nn.Module):
         )
 
     def forward(self, u, v, m_features):
-        E_prime, nu_prime, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
+        E_prime, _, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
         E, nu = torch.split(m_features, [501, 501], dim=-1)
         feature1 = E / nu**2
         feature2 = 1 / nu
         features = torch.cat((feature1, feature2), dim=-1)
+        
+
         energy = (
-            1 / 2 * (E_prime - 1) * u**2
+            1 / 2 * (torch.exp(self.E(features)) -1.0) * u**2
             + 1 / 2 * (u - v) ** 2
             + 1 / 2 * torch.sum(self.B(m_features) * v**2, dim=-1, keepdim=True)
         )
@@ -102,7 +96,7 @@ class InverseDissipationPotential(nn.Module):
         # )
 
         self.nu = nn.Sequential(
-            nn.Linear(501, 64),
+            nn.Linear(1002, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
@@ -159,8 +153,6 @@ class ViscoelasticMaterialModel(nn.Module):
         self.tf = TrueFeatures()
         self.E_encoder = E_encoder
         self.nu_encoder = nu_encoder
-
-        self.apply(init_weights)
 
     def microstructure_encoder(self, E, nu):
         feat = self.tf(E, nu)

@@ -6,7 +6,7 @@
 # Number of GPUs 
 # SBATCH --constraint="cascadelake"
 #SBATCH --partition gpu
-#SBATCH --gres gpu:p100:1
+#SBATCH --gres gpu:1
 
 # Wall time: maxctivate base
 # Maximum allowed run time
