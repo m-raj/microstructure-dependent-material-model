@@ -22,6 +22,14 @@ class TrueFeatures(nn.Module):
         return output
 
 
+def init_weights(m):
+    if isinstance(m, nn.Linear):
+        # Initialize linear layers
+        nn.init.kaiming_normal_(m.weight)
+        if m.bias is not None:
+            m.bias.data.fill_(0.01)
+
+
 class CustomActivation(nn.Module):
     def __init__(self):
         super(CustomActivation, self).__init__()
@@ -147,6 +155,8 @@ class ViscoelasticMaterialModel(nn.Module):
         self.tf = TrueFeatures()
         self.E_encoder = E_encoder
         self.nu_encoder = nu_encoder
+
+        self.apply(init_weights)
 
     def microstructure_encoder(self, E, nu):
         feat = self.tf(E, nu)
