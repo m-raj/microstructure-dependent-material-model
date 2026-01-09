@@ -25,7 +25,7 @@ class TrueFeatures(nn.Module):
 def init_weights(m):
     if isinstance(m, nn.Linear):
         # Initialize linear layers
-        nn.init.kaiming_normal_(m.weight)
+        nn.init.xavier_normal_(m.weight)
         if m.bias is not None:
             m.bias.data.fill_(0.01)
 
