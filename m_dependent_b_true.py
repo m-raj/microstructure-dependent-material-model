@@ -63,7 +63,7 @@ class EnergyFunction(nn.Module):
         
 
         energy = (
-            1 / 2 * (torch.exp(self.E(features)) -1.0) * u**2
+            1 / 2 * self.E(features) * u**2
             + 1 / 2 * (u - v) ** 2
             + 1 / 2 * torch.sum(self.B(m_features) * v**2, dim=-1, keepdim=True)
         )
