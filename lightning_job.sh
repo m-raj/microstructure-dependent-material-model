@@ -28,7 +28,7 @@ args=(
 	--data_path hmc.txt
 	--encoder_latent_dim 15
 	--encoder_hidden_dim 200
-	--encoder_epochs 100 
+	--encoder_epochs 1 
 	--encoder_batch_size 1000 
 	--encoder_lr 0.001 
 	--material_model m_dependent_b_true 
