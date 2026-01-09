@@ -27,7 +27,7 @@ class CustomActivation(nn.Module):
         super(CustomActivation, self).__init__()
 
     def forward(self, x):
-        return torch.square(F.relu(x))
+        return F.relu(x)
 
 
 class EnergyFunction(nn.Module):
@@ -59,7 +59,7 @@ class EnergyFunction(nn.Module):
         energy = (
             1 / 2 * E_prime * u**2
             + 1 / 2 * (u - v) ** 2
-            + 1 / 2 * torch.sum(v**2, dim=-1, keepdim=True)
+            + 1 / 2 * torch.sum(self.B(m_features) * v**2, dim=-1, keepdim=True)
         )
 
         # x = torch.cat((u, v, m_features), dim=-1)
