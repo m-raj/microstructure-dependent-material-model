@@ -102,7 +102,7 @@ class InverseDissipationPotential(nn.Module):
         # )
 
         self.nu = nn.Sequential(
-            nn.Linear(1002, 64),
+            nn.Linear(501, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
@@ -123,7 +123,7 @@ class InverseDissipationPotential(nn.Module):
         feature1 = E / nu**2
         feature2 = 1 / nu
         features = torch.cat((feature1, feature2), dim=-1)
-        potential = -1 / 2 * self.nu(features) * p**2 + 1 / 2 * torch.sum(
+        potential = -1 / 2 * self.nu(feature2) * p**2 + 1 / 2 * torch.sum(
             self.beta(m_features) * q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
