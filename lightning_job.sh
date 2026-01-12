@@ -6,7 +6,7 @@
 # Number of GPUs 
 # SBATCH --constraint="cascadelake"
 #SBATCH --partition gpu
-#SBATCH --gres gpu:v100:1
+#SBATCH --gres gpu:p100:1
 
 # Wall time: maxctivate base
 # Maximum allowed run time
@@ -31,7 +31,7 @@ args=(
 	--encoder_epochs 1 
 	--encoder_batch_size 1000 
 	--encoder_lr 0.001 
-	--material_model m_dependent_b_true 
+	--material_model m_dependent_b_decomposition 
 	--hidden_dim 150
 	--epochs 2000
 	--lr 0.001 

@@ -41,7 +41,7 @@ class EnergyFunction(nn.Module):
         # )
 
         self.microstructure = nn.Sequential(
-            nn.Linear(2002, 64),
+            nn.Linear(2004, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
