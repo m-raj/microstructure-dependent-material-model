@@ -5,58 +5,74 @@ import torch.nn.functional as F
 # Decompsition of W and D into three parts
 
 
-class ReLU2(nn.Module):
+class TrueFeatures(nn.Module):
     def __init__(self):
-        super(ReLU2, self).__init__()
+        super(TrueFeatures, self).__init__()
+
+    def forward(self, feature1, feature2):
+
+        nu_prime = torch.mean(feature2.pow(-1), dim=1, keepdim=True).pow(-1)
+        E_prime = (
+            torch.mean(feature1 / feature2.pow(2), dim=1, keepdim=True) * nu_prime**2
+        )
+
+        # nu_prime = torch.mean(feature2, dim=1, keepdim=True).pow(-1)
+        # E_prime = torch.mean(feature1, dim=1, keepdim=True) * nu_prime**2
+        output = torch.cat((E_prime, nu_prime), dim=-1)
+        return output
+
+
+class CustomActivation(nn.Module):
+    def __init__(self):
+        super(CustomActivation, self).__init__()
 
     def forward(self, x):
         return torch.square(F.relu(x))
-
-
-class Square(nn.Module):
-    def __init__(self):
-        super(Square, self).__init__()
-
-    def forward(self, x):
-        return torch.square(x) / 40000
 
 
 class EnergyFunction(nn.Module):
     def __init__(self, input_dim, hidden_dims):
         super(EnergyFunction, self).__init__()
 
-        self.E = nn.Sequential(
-            nn.Linear(input_dim[2], hidden_dims[0]),
+        # self.E = nn.Sequential(
+        #     nn.Linear(1002, hidden_dims[0]),
+        #     nn.Softplus(),
+        #     nn.Linear(hidden_dims[0], input_dim[0]),
+        # )
+
+        self.microstructure = nn.Sequential(
+            nn.Linear(2002, 64),
             nn.ReLU(),
-            nn.Linear(hidden_dims[0], input_dim[0]),
+            nn.Linear(64, 32),
             nn.ReLU(),
+            nn.Linear(32, 2),
         )
 
-        self.B = nn.Sequential(
-            nn.Linear(input_dim[2], hidden_dims[0]),
-            nn.ReLU(),
-            nn.Linear(hidden_dims[0], input_dim[1]),
-            nn.ReLU(),
+        self.energy_function = nn.Sequential(
+            nn.Linear(4, 50),
+            CustomActivation(),
+            nn.Linear(50, 1),
         )
 
     def forward(self, u, v, m_features):
-        energy = (
-            1 / 2 * self.E(m_features) * u**2
-            + 1 / 2 * (u - v) ** 2
-            + 1 / 2 * torch.sum(self.B(m_features) * v**2, dim=-1, keepdim=True)
-        )
+        E_prime, _, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
+        E, nu = torch.split(m_features, [501, 501], dim=-1)
+        feature1 = E / nu**2
+        feature2 = 1 / nu
+        features = torch.cat((m_features, feature1, feature2), dim=-1)
 
-        # x = torch.cat((u, v, m_features), dim=-1)
-        # for layer in self.layers:
-        #     x = self.activation(layer(x))
-        # energy = self.output_layer(x)
+        energy = self.microstructure(features)
+        energy = self.energy_function(torch.cat((u, v, energy), dim=-1))
         return energy.squeeze(-1)
 
     def compute_derivative(self, u, v, m_features):
         u.requires_grad_(True)
         energy = self(u, v, m_features)
         grad_u, grad_v = torch.autograd.grad(
-            energy.sum(), (u, v), create_graph=True, retain_graph=True
+            energy.sum(),
+            (u, v),
+            create_graph=True,
+            retain_graph=True,
         )
         return grad_u, grad_v
 
@@ -64,23 +80,35 @@ class EnergyFunction(nn.Module):
 class InverseDissipationPotential(nn.Module):
     def __init__(self, input_dim, hidden_dims):
         super(InverseDissipationPotential, self).__init__()
-        self.nu0 = nn.Sequential(
-            nn.Linear(input_dim[2], hidden_dims[0]),
+        # self.nu = nn.Sequential(
+        #     nn.Linear(501, hidden_dims[0]),
+        #     nn.Softplus(),
+        #     nn.Linear(hidden_dims[0], input_dim[0]),
+        # )
+
+        self.nu = nn.Sequential(
+            nn.Linear(1002, 64),
             nn.ReLU(),
-            nn.Linear(hidden_dims[0], input_dim[0]),
+            nn.Linear(64, 32),
             nn.ReLU(),
+            nn.Linear(32, 1),
         )
 
         self.beta = nn.Sequential(
-            nn.Linear(input_dim[2], hidden_dims[0]),
-            nn.ReLU(),
+            nn.Linear(1002, hidden_dims[0]),
+            nn.Softplus(),
             nn.Linear(hidden_dims[0], input_dim[1]),
-            nn.ReLU(),
+            nn.Softplus(),
         )
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
-        potential = -1 / 2 * self.nu0(m_features) * p**2 + 1 / 2 * torch.sum(
+        E_prime, nu_prime, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
+        E, nu = torch.split(m_features, [501, 501], dim=-1)
+        feature1 = E / nu**2
+        feature2 = 1 / nu
+        features = torch.cat((feature1, feature2), dim=-1)
+        potential = -1 / 2 * self.nu(features) * p**2 + 1 / 2 * torch.sum(
             self.beta(m_features) * q**2, dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
@@ -113,11 +141,13 @@ class ViscoelasticMaterialModel(nn.Module):
         self.dt = dt  # Time step size
 
         # Microstructure encoder
+        self.tf = TrueFeatures()
         self.E_encoder = E_encoder
         self.nu_encoder = nu_encoder
 
     def microstructure_encoder(self, E, nu):
-        x = torch.cat((self.E_encoder(E), self.nu_encoder(nu)), dim=-1)
+        feat = self.tf(E, nu)
+        x = torch.cat((feat, E, nu), dim=-1)
         return x
 
     def forward(self, e, e_dot, E=None, nu=None):
