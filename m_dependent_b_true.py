@@ -60,7 +60,6 @@ class EnergyFunction(nn.Module):
         feature1 = E / nu**2
         feature2 = 1 / nu
         features = torch.cat((feature1, feature2), dim=-1)
-        
 
         energy = (
             1 / 2 * self.E(features) * u**2
