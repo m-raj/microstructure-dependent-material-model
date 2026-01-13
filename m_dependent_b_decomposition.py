@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from convex_network import *
 
 # Decompsition of W and D into three parts
 
@@ -94,6 +95,12 @@ class InverseDissipationPotential(nn.Module):
             nn.Linear(32, 1),
         )
 
+        self.potential = nn.Sequential(
+            nn.Linear(2, 50),
+            CustomActivation(),
+            nn.Linear(50, 1),
+        )
+
         self.beta = nn.Sequential(
             nn.Linear(1002, hidden_dims[0]),
             nn.Softplus(),
@@ -101,11 +108,13 @@ class InverseDissipationPotential(nn.Module):
             nn.Softplus(),
         )
 
-        self.dissipation = nn.Sequential(
-            nn.Linear(1, 50),
-            CustomActivation(),
-            nn.Linear(50, 1),
-        )
+        # self.dissipation = nn.Sequential(
+        #     nn.Linear(1, 50),
+        #     CustomActivation(),
+        #     nn.Linear(50, 1),
+        # )
+
+        self.dissipation = ConvexNetwork(1, 50)
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
@@ -114,7 +123,9 @@ class InverseDissipationPotential(nn.Module):
         feature1 = E / nu**2
         feature2 = 1 / nu
         features = torch.cat((feature1, feature2), dim=-1)
-        potential = -1 / 2 * self.nu(features) * p**2 + 1 / 2 * torch.sum(
+        features = self.microstructure(features)
+        features = torch.cat((p, features), dim=-1)
+        potential = -self.potential(features) + 1 / 2 * torch.sum(
             self.beta(m_features) * self.dissipation(q), dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
