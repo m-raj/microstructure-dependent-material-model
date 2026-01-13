@@ -10,7 +10,7 @@
 
 # Wall time: maxctivate base
 # Maximum allowed run time
-#SBATCH --time=8:30:00
+#SBATCH --time=5:30:00
 
 # Send email to user
 #SBATCH --mail-user=mraj@caltech.edu
