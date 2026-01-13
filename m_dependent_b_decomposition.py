@@ -86,7 +86,7 @@ class InverseDissipationPotential(nn.Module):
         #     nn.Linear(hidden_dims[0], input_dim[0]),
         # )
 
-        self.nu = nn.Sequential(
+        self.microstructure = nn.Sequential(
             nn.Linear(1002, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
@@ -94,14 +94,17 @@ class InverseDissipationPotential(nn.Module):
             nn.Linear(32, 1),
         )
 
+        self.potential = nn.Sequential(
+            nn.Linear(2, 50),
+            CustomActivation(),
+            nn.Linear(50, 1),
+        )
+
         self.beta = nn.Sequential(
             nn.Linear(1002, hidden_dims[0]),
             nn.Softplus(),
-            nn.Linear(hidden_dims[0], 1),
-        )
-
-        self.potential = nn.Sequential(
-            nn.Linear(2, 50), CustomActivation(), nn.Linear(50, 1)
+            nn.Linear(hidden_dims[0], input_dim[1]),
+            nn.Softplus(),
         )
 
     def forward(self, p, q, m_features):
@@ -111,8 +114,12 @@ class InverseDissipationPotential(nn.Module):
         feature1 = E / nu**2
         feature2 = 1 / nu
         features = torch.cat((feature1, feature2), dim=-1)
-        potential = -1 / 2 * self.nu(features) * p**2 + self.potential(
-            torch.cat(self.beta(m_features), q), dim=-1
+        potential = -self.potential(
+            torch.cat(self.microstructure(features), p)
+        ) + 1 / 2 * torch.sum(
+            self.beta(m_features) * q**2,
+            dim=-1,
+            keepdim=True,
         )
         return potential.squeeze(-1)
 

@@ -11,32 +11,48 @@ class ReLU2(nn.Module):
         return torch.square(F.relu(x))
 
 
-class EnergyFunction(nn.Module):
+class InverseDissipationPotential(nn.Module):
     def __init__(self, input_dim, hidden_dims):
-        super(EnergyFunction, self).__init__()
+        super(InverseDissipationPotential, self).__init__()
+        # self.nu = nn.Sequential(
+        #     nn.Linear(501, hidden_dims[0]),
+        #     nn.Softplus(),
+        #     nn.Linear(hidden_dims[0], input_dim[0]),
+        # )
 
-        self.layers = nn.ModuleList()
-        for i in range(len(hidden_dims)):
-            in_dim = input_dim if i == 0 else hidden_dims[i - 1]
-            out_dim = hidden_dims[i]
-            self.layers.append(nn.Linear(in_dim, out_dim))
-        self.output_layer = nn.Linear(hidden_dims[-1], 1)
-        self.activation = ReLU2()
-
-    def forward(self, u, v, m_features):
-        x = torch.cat((u, v, m_features), dim=-1)
-        for layer in self.layers:
-            x = self.activation(layer(x))
-        energy = self.output_layer(x)
-        return energy.squeeze(-1)
-
-    def compute_derivative(self, u, v, m_features):
-        u.requires_grad_(True)
-        energy = self(u, v, m_features)
-        grad_u, grad_v = torch.autograd.grad(
-            energy.sum(), (u, v), create_graph=True, retain_graph=True
+        self.nu = nn.Sequential(
+            nn.Linear(1002, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1),
         )
-        return grad_u, grad_v
+
+        self.beta = nn.Sequential(
+            nn.Linear(1002, hidden_dims[0]),
+            nn.Softplus(),
+            nn.Linear(hidden_dims[0], input_dim[1]),
+            nn.Softplus(),
+        )
+
+    def forward(self, p, q, m_features):
+        p.requires_grad_(True)
+        E_prime, nu_prime, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
+        E, nu = torch.split(m_features, [501, 501], dim=-1)
+        feature1 = E / nu**2
+        feature2 = 1 / nu
+        features = torch.cat((feature1, feature2), dim=-1)
+        potential = -1 / 2 * self.nu(features) * p**2 + 1 / 2 * torch.sum(
+            self.beta(m_features) * q**2, dim=-1, keepdim=True
+        )
+        return potential.squeeze(-1)
+
+    def compute_derivative(self, p, q, m_features):
+        potential = self(p, q, m_features)
+        grad_p, grad_q = torch.autograd.grad(
+            potential.sum(), (p, q), create_graph=True, retain_graph=True
+        )
+        return grad_p, grad_q
 
 
 class InverseDissipationPotential(nn.Module):
