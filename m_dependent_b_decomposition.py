@@ -115,7 +115,7 @@ class InverseDissipationPotential(nn.Module):
         feature2 = 1 / nu
         features = torch.cat((feature1, feature2), dim=-1)
         potential = -self.potential(
-            torch.cat(self.microstructure(features), p)
+            torch.cat((self.microstructure(features), p), dim=-1)
         ) + 1 / 2 * torch.sum(
             self.beta(m_features) * q**2,
             dim=-1,
