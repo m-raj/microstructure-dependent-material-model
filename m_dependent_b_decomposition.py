@@ -41,7 +41,7 @@ class EnergyFunction(nn.Module):
         # )
 
         self.microstructure = nn.Sequential(
-            nn.Linear(2002, 64),
+            nn.Linear(2004, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
@@ -97,7 +97,7 @@ class InverseDissipationPotential(nn.Module):
         self.beta = nn.Sequential(
             nn.Linear(1002, hidden_dims[0]),
             nn.Softplus(),
-            nn.Linear(hidden_dims[0], input_dim[1]),
+            nn.Linear(hidden_dims[0], 1),
             nn.Softplus(),
         )
 
