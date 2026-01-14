@@ -93,7 +93,7 @@ class InverseDissipationPotential(nn.Module):
             modes1=4, width=32, width_final=64, d_in=2, d_out=1, n_layers=3
         )
 
-        self.nn = nn.Sequential(nn.Linear(2, 50), CustomActivation(), nn.Linear(50, 1))
+        self.nn = nn.Sequential(nn.Linear(1, 50), CustomActivation(), nn.Linear(50, 1))
 
         self.dissipation = ConvexNetwork(1, 50)
 
