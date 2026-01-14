@@ -6,11 +6,11 @@
 # Number of GPUs 
 # SBATCH --constraint="cascadelake"
 #SBATCH --partition gpu
-#SBATCH --gres gpu:p100:1
+#SBATCH --gres gpu:nvidia_l40s:1
 
 # Wall time: maxctivate base
 # Maximum allowed run time
-#SBATCH --time=8:30:00
+#SBATCH --time=16:30:00
 
 # Send email to user
 #SBATCH --mail-user=mraj@caltech.edu
