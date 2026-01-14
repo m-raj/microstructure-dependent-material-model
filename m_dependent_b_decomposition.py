@@ -55,7 +55,9 @@ class EnergyFunction(nn.Module):
         #     nn.Linear(50, 1),
         # )
 
-        self.nn = nn.Sequential(nn.Linear(4, 50), CustomActivation(), nn.Linear(50, 1))
+        self.nn = nn.Sequential(
+            nn.Linear(4, 100), CustomActivation(), nn.Linear(100, 1)
+        )
 
     def forward(self, u, v, m_features):
 
@@ -95,16 +97,16 @@ class InverseDissipationPotential(nn.Module):
             modes1=4, width=32, width_final=64, d_in=2, d_out=1, n_layers=3
         )
 
-        # self.nn = nn.Sequential(nn.Linear(1, 50), CustomActivation(), nn.Linear(50, 1))
+        self.nn = nn.Sequential(nn.Linear(1, 50), CustomActivation(), nn.Linear(50, 1))
 
-        # self.dissipation = ConvexNetwork(1, 50)
+        self.dissipation = ConvexNetwork(1, 50)
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
         _, nu = torch.split(m_features, [1, 1], dim=1)
 
-        potential = -1 / 2 * self.fnm1(nu) * p**2 + 1 / 2 * torch.sum(
-            self.fnm2(m_features) * q**2, dim=-1, keepdim=True
+        potential = -1 / 2 * self.fnm1(nu) * self.nn(q) + 1 / 2 * torch.sum(
+            self.fnm2(m_features) * self.dissipation(q), dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
 
