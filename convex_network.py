@@ -44,7 +44,7 @@ class PartiallyInputConvexLayer(nn.Module):
         l1 = self.fc1(u)
         l2 = self.fc2(u)
         if z is not None:
-            l3 = F.softplus(self.fc3(u))
+            l3 = F.activation(self.fc3(u))
             t1 = torch.einsum("bj,bj,ji->bi", z, l3, torch.square(self.A))
         t2 = torch.einsum("bj,bj,ji->bi", y, l2, self.B)
 
@@ -57,7 +57,7 @@ class PartiallyInputConvex(nn.Module):
         super(PartiallyInputConvex, self).__init__()
         self.fc1 = nn.Linear(x_dim, u_dim)
 
-        self.activation = torch.nn.ReLU()
+        self.activation = ReluSquare()
 
         self.picnn1 = PartiallyInputConvexLayer(y_dim, x_dim, z_dim, z_dim=None)
         self.picnn2 = PartiallyInputConvexLayer(y_dim, u_dim, 1, z_dim=z_dim)
@@ -67,7 +67,7 @@ class PartiallyInputConvex(nn.Module):
         Convex in y, not in x
         """
         u = self.activation(self.fc1(x))
-        z1 = F.softplus(self.picnn1(y, x))
+        z1 = self.activation(self.picnn1(y, x))
         out = self.picnn2(y, u, z1)
 
         return out.squeeze(-1)

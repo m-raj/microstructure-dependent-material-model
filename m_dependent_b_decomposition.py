@@ -87,7 +87,7 @@ class InverseDissipationPotential(nn.Module):
         #     nn.Linear(hidden_dims[0], input_dim[0]),
         # )
 
-        self.microstructure = nn.Sequential(
+        self.microstructure1 = nn.Sequential(
             nn.Linear(1002, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
@@ -95,18 +95,26 @@ class InverseDissipationPotential(nn.Module):
             nn.Linear(32, 1),
         )
 
-        self.potential = nn.Sequential(
-            nn.Linear(2, 50),
-            CustomActivation(),
-            nn.Linear(50, 1),
+        self.microstructure2 = nn.Sequential(
+            nn.Linear(1002, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1),
         )
 
-        self.beta = nn.Sequential(
-            nn.Linear(1002, hidden_dims[0]),
-            nn.Softplus(),
-            nn.Linear(hidden_dims[0], 1),
-            nn.Softplus(),
-        )
+        # self.potential = nn.Sequential(
+        #     nn.Linear(2, 50),
+        #     CustomActivation(),
+        #     nn.Linear(50, 1),
+        # )
+
+        # self.beta = nn.Sequential(
+        #     nn.Linear(1002, hidden_dims[0]),
+        #     nn.Softplus(),
+        #     nn.Linear(hidden_dims[0], 1),
+        #     nn.Softplus(),
+        # )
 
         # self.dissipation = nn.Sequential(
         #     nn.Linear(1, 50),
@@ -114,20 +122,17 @@ class InverseDissipationPotential(nn.Module):
         #     nn.Linear(50, 1),
         # )
 
-        self.dissipation = ConvexNetwork(1, 50)
+        # self.dissipation = ConvexNetwork(1, 50)
+        self.picnn1 = PartiallyInputConvexLayer(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
+        self.picnn2 = PartiallyInputConvexLayer(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
         E_prime, nu_prime, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
-        E, nu = torch.split(m_features, [501, 501], dim=-1)
-        feature1 = E / nu**2
-        feature2 = 1 / nu
-        features = torch.cat((feature1, feature2), dim=-1)
-        features = self.microstructure(features)
-        features = torch.cat((p, features), dim=-1)
-        potential = -self.potential(features) + 1 / 2 * torch.sum(
-            self.beta(m_features) * self.dissipation(q), dim=-1, keepdim=True
-        )
+        _, nu = torch.split(m_features, [501, 501], dim=-1)
+        features1 = self.microstructure1(1 / nu)
+        features2 = self.microstructure2(m_features)
+        potential = -self.picnn1(p, features1) + self.picnn2(q, features2)
         return potential.squeeze(-1)
 
     def compute_derivative(self, p, q, m_features):
