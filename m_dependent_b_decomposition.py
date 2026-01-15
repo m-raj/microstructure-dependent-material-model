@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from convex_network import *
-from fnm import *
 
 # Decompsition of W and D into three parts
 
@@ -42,31 +41,29 @@ class EnergyFunction(nn.Module):
         #     nn.Linear(hidden_dims[0], input_dim[0]),
         # )
 
-        self.fnm1 = FNF1d(
-            modes1=4, width=32, width_final=64, d_in=2, d_out=1, n_layers=3
-        )
-        self.fnm2 = FNF1d(
-            modes1=4, width=32, width_final=64, d_in=2, d_out=1, n_layers=3
+        self.microstructure = nn.Sequential(
+            nn.Linear(2004, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 2),
         )
 
-        # self.B = nn.Sequential(
-        #     nn.Linear(4, 50),
-        #     CustomActivation(),
-        #     nn.Linear(50, 1),
-        # )
-
-        self.nn = nn.Sequential(
-            nn.Linear(4, 100), CustomActivation(), nn.Linear(100, 1)
+        self.energy_function = nn.Sequential(
+            nn.Linear(4, 50),
+            CustomActivation(),
+            nn.Linear(50, 1),
         )
 
     def forward(self, u, v, m_features):
+        E_prime, _, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
+        E, nu = torch.split(m_features, [501, 501], dim=-1)
+        feature1 = E / nu**2
+        feature2 = 1 / nu
+        features = torch.cat((m_features, feature1, feature2), dim=-1)
 
-        features = torch.cat(
-            (u, v, self.fnm1(m_features), self.fnm2(m_features)), dim=-1
-        )
-
-        energy = self.nn(features)
-
+        energy = self.microstructure(features)
+        energy = self.energy_function(torch.cat((u, v, energy), dim=-1))
         return energy.squeeze(-1)
 
     def compute_derivative(self, u, v, m_features):
@@ -90,23 +87,46 @@ class InverseDissipationPotential(nn.Module):
         #     nn.Linear(hidden_dims[0], input_dim[0]),
         # )
 
-        self.fnm1 = FNF1d(
-            modes1=4, width=32, width_final=64, d_in=1, d_out=1, n_layers=3
-        )
-        self.fnm2 = FNF1d(
-            modes1=4, width=32, width_final=64, d_in=2, d_out=1, n_layers=3
+        self.microstructure = nn.Sequential(
+            nn.Linear(1002, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1),
         )
 
-        self.nn = nn.Sequential(nn.Linear(1, 50), CustomActivation(), nn.Linear(50, 1))
+        self.potential = nn.Sequential(
+            nn.Linear(2, 50),
+            CustomActivation(),
+            nn.Linear(50, 1),
+        )
+
+        self.beta = nn.Sequential(
+            nn.Linear(1002, hidden_dims[0]),
+            nn.Softplus(),
+            nn.Linear(hidden_dims[0], 1),
+            nn.Softplus(),
+        )
+
+        # self.dissipation = nn.Sequential(
+        #     nn.Linear(1, 50),
+        #     CustomActivation(),
+        #     nn.Linear(50, 1),
+        # )
 
         self.dissipation = ConvexNetwork(1, 50)
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
-        _, nu = torch.split(m_features, [1, 1], dim=1)
-
-        potential = -1 / 2 * self.fnm1(nu) * self.nn(p) + 1 / 2 * torch.sum(
-            self.fnm2(m_features) * self.dissipation(q), dim=-1, keepdim=True
+        E_prime, nu_prime, m_features = torch.split(m_features, [1, 1, 1002], dim=-1)
+        E, nu = torch.split(m_features, [501, 501], dim=-1)
+        feature1 = E / nu**2
+        feature2 = 1 / nu
+        features = torch.cat((feature1, feature2), dim=-1)
+        features = self.microstructure(features)
+        features = torch.cat((p, features), dim=-1)
+        potential = -self.potential(features) + 1 / 2 * torch.sum(
+            self.beta(m_features) * self.dissipation(q), dim=-1, keepdim=True
         )
         return potential.squeeze(-1)
 
@@ -143,8 +163,8 @@ class ViscoelasticMaterialModel(nn.Module):
         self.nu_encoder = nu_encoder
 
     def microstructure_encoder(self, E, nu):
-        # feat = self.tf(E, nu)
-        x = torch.stack((E, nu), dim=1)
+        feat = self.tf(E, nu)
+        x = torch.cat((feat, E, nu), dim=-1)
         return x
 
     def forward(self, e, e_dot, E=None, nu=None):
