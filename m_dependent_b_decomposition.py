@@ -123,8 +123,8 @@ class InverseDissipationPotential(nn.Module):
         # )
 
         # self.dissipation = ConvexNetwork(1, 50)
-        self.picnn1 = PartiallyInputConvexLayer(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
-        self.picnn2 = PartiallyInputConvexLayer(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
+        self.picnn1 = PartiallyInputConvex(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
+        self.picnn2 = PartiallyInputConvex(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
 
     def forward(self, p, q, m_features):
         p.requires_grad_(True)
