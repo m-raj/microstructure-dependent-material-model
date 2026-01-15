@@ -88,7 +88,7 @@ class InverseDissipationPotential(nn.Module):
         # )
 
         self.microstructure1 = nn.Sequential(
-            nn.Linear(1002, 64),
+            nn.Linear(501, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
