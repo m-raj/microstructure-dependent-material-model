@@ -44,7 +44,7 @@ class PartiallyInputConvexLayer(nn.Module):
         l1 = self.fc1(u)
         l2 = self.fc2(u)
         if z is not None:
-            l3 = F.activation(self.fc3(u))
+            l3 = self.activation(self.fc3(u))
             t1 = torch.einsum("bj,bj,ji->bi", z, l3, torch.square(self.A))
         t2 = torch.einsum("bj,bj,ji->bi", y, l2, self.B)
 
