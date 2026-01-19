@@ -152,7 +152,7 @@ class ViscoelasticMaterialModel(nn.Module):
         self.nu_encoder = nu_encoder
 
     def microstructure_encoder(self, E, nu):
-        x = torch.stack((E, nu), dim=-1)
+        x = torch.stack((E, nu), dim=1)
         return x
 
     def forward(self, e, e_dot, E=None, nu=None):
