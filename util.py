@@ -46,7 +46,7 @@ class ViscoelasticDataset(Dataset):
         self.encoder = encoder
 
         self.E_stats = torch.load("data/mixture_random_field_process_E_stats.pt")
-        self.nu_stats = torch.load("data/mixture_random_field_process_nu_stats.pt")
+        # self.nu_stats = torch.load("data/mixture_random_field_process_nu_stats.pt")
         self.onebynu_stats = torch.load(
             "data/mixture_random_field_process_onebynu_stats.pt"
         )
