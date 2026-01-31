@@ -20,7 +20,7 @@ if __name__ == "__main__":
         # Set the wandb entity where your project will be logged (generally your team name).
         entity="sci-ai",
         # Set the wandb project where this run will be logged.
-        project="combined_encoding_training",
+        project="EVP",
         # Track hyperparameters and run metadata.
         config=args.__dict__,
         # Name of the run
@@ -39,7 +39,6 @@ if __name__ == "__main__":
             data_path=file,
             step=args.step,
             device=device,
-            encoder=True,
         )
         for file in data_files
     ]
