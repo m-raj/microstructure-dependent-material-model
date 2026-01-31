@@ -48,7 +48,7 @@ class InverseDissipationPotential(nn.Module):
 
     def forward(self, q, m_features):
 
-        potential = self.picnn1(q.unsqueeze(-1), m_features)
+        potential = self.picnn1(q, m_features)
 
         # potential = torch.mean(
         #     torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
