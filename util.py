@@ -70,3 +70,37 @@ class ViscoelasticDataset(Dataset):
         )
         y = self.s[idx].to(self.device)
         return x, y
+
+
+class ViscoplasticDataset(Dataset):
+    def __init__(self, data_path, step, device="cpu"):
+
+        with open(data_path, "rb") as f:
+            data = pickle.load(f)
+
+        self.e = torch.tensor(data["strain"][:, ::step], dtype=torch.float32)
+        self.s = torch.tensor(data["stress"][:, ::step], dtype=torch.float32)
+
+        self.E = torch.tensor(data["youngs_modulus"], dtype=torch.float32)
+        self.Y = torch.tensor(data["yield_stress"], dtype=torch.float32)
+        self.n = torch.tensor(data["rate_exponent"], dtype=torch.float32)
+        self.edot_0 = torch.tensor(data["rate_constant"], dtype=torch.float32)
+        self.device = device
+
+    def __len__(self):
+        return len(self.e)
+
+    def transform(self, E, nu):
+
+        return E, nu
+
+    def __getitem__(self, idx):
+        x = (
+            self.e[idx].to(self.device),
+            self.E[idx].to(self.device),
+            self.Y[idx].to(self.device),
+            self.n[idx].to(self.device),
+            self.edot_0[idx].to(self.device),
+        )
+        y = self.s[idx].to(self.device)
+        return x, y
