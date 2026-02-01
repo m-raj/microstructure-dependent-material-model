@@ -83,4 +83,7 @@ def parse_args():
     parser.add_argument(
         "--freeze_encoder", action="store_true", help="Number of internal variables"
     )
+    parser.add_argument(
+        "--final_step", type=int, default=5000, help="Final time step for the data"
+    )
     return parser.parse_args()

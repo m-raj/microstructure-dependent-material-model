@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from convex_network import *
 from fnm import *
+import tqdm
 
 # Decompsition of W and D into three parts
 
@@ -50,6 +51,8 @@ class InverseDissipationPotential(nn.Module):
 
         potential = self.picnn1(q, m_features)
 
+        # Y, n, edot_0 = torch.split(m_features, 1, dim=1)
+        # Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
         # potential = torch.mean(
         #     torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
         #     dim=1,
@@ -77,6 +80,9 @@ class ViscoplasticMaterialModel(nn.Module):
     ):
         super(ViscoplasticMaterialModel, self).__init__()
         self.niv = energy_input_dim[1]
+        print(
+            self.niv, "Number of internal variables in the viscoplastic material model."
+        )
         self.energy_function = EnergyFunction()
         self.dissipation_potential = InverseDissipationPotential()
         self.dt = dt  # Time step size
@@ -100,7 +106,8 @@ class ViscoplasticMaterialModel(nn.Module):
         #     features1 = self.fnm1(microstructure)
         #     features2 = self.fnm2(microstructure)
         features3 = self.fnm3(microstructure)
-        #     features4 = self.fnm4(microstructure)
+        # features3 = microstructure
+        #     features4 = self.fnm4(microstructur
         return features3
 
     def forward(self, e, E, Y, n, edot_0):
@@ -113,8 +120,7 @@ class ViscoplasticMaterialModel(nn.Module):
         ]
         m_features1 = 1 / torch.mean(1 / E, axis=1, keepdim=True)
         m_features2 = self.microstructure_encoder(Y, n, edot_0)
-
-        for i in range(0, e.shape[1]):
+        for i in tqdm.trange(0, e.shape[1]):
             s_eq, d = self.compute_energy_derivative(e[:, i], xi[i], m_features1)
             kinetics = self.compute_dissipation_derivative(-d, m_features2)
             stress.append(s_eq)

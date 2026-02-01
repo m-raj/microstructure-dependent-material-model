@@ -39,6 +39,7 @@ if __name__ == "__main__":
             data_path=file,
             step=args.step,
             device=device,
+            final_step=args.final_step,
         )
         for file in data_files
     ]
@@ -60,10 +61,10 @@ if __name__ == "__main__":
         trainset, batch_size=args.batch_size, shuffle=True, num_workers=0
     )
     val_dataloader = DataLoader(
-        valset, batch_size=args.batch_size, shuffle=True, num_workers=0
+        valset, batch_size=args.batch_size, shuffle=False, num_workers=0
     )
     test_dataloader = DataLoader(
-        testset, batch_size=args.batch_size, shuffle=True, num_workers=0
+        testset, batch_size=args.batch_size, shuffle=False, num_workers=0
     )
 
     loss_function = LossFunction()
@@ -122,6 +123,7 @@ if __name__ == "__main__":
         callbacks=[model_checkpoint, lr_monitor],
         logger=wandb_logger,
         inference_mode=False,
+        num_sanity_val_steps=0,
     )
 
     trainer.fit(lit, train_dataloader, val_dataloader)

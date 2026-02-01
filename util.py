@@ -73,13 +73,13 @@ class ViscoelasticDataset(Dataset):
 
 
 class ViscoplasticDataset(Dataset):
-    def __init__(self, data_path, step, device="cpu"):
+    def __init__(self, data_path, step, final_step, device="cpu"):
 
         with open(data_path, "rb") as f:
             data = pickle.load(f)
 
-        self.e = torch.tensor(data["strain"][:, ::step], dtype=torch.float32)
-        self.s = torch.tensor(data["stress"][:, ::step], dtype=torch.float32)
+        self.e = torch.tensor(data["strain"][:, :final_step:step], dtype=torch.float32)
+        self.s = torch.tensor(data["stress"][:, :final_step:step], dtype=torch.float32)
 
         self.E = torch.tensor(data["youngs_modulus"], dtype=torch.float32)
         self.Y = torch.tensor(data["yield_stress"], dtype=torch.float32)
