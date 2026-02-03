@@ -44,18 +44,18 @@ class EnergyFunction(nn.Module):
 class InverseDissipationPotential(nn.Module):
     def __init__(self):
         super(InverseDissipationPotential, self).__init__()
-        # self.picnn1 = PartiallyInputConvex(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
+        self.picnn1 = PartiallyInputConvex(y_dim=1, x_dim=2, z_dim=50, u_dim=50)
         # self.picnn2 = PartiallyInputConvex(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
-        self.dense_network = nn.Sequential(
-            nn.Linear(10, 1000), CustomActivation(), nn.Linear(1000, 1)
-        )
+        # self.dense_network = nn.Sequential(
+        #     nn.Linear(10, 1000), CustomActivation(), nn.Linear(1000, 1)
+        # )
 
     def forward(self, q, m_features):
 
         features = torch.cat((q, m_features), dim=1)
-        potential = self.dense_network(features)
+        # potential = self.dense_network(features)
 
-        # potential = self.picnn1(q, m_features)
+        potential = self.picnn1(q, m_features)
 
         # Y, n, edot_0 = torch.split(m_features, 1, dim=1)
         # Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
@@ -101,7 +101,7 @@ class ViscoplasticMaterialModel(nn.Module):
         # )
 
         self.fnm3 = FNF1d(
-            modes1=2, width=32, width_final=64, d_in=3, d_out=9, n_layers=3
+            modes1=2, width=32, width_final=64, d_in=3, d_out=2, n_layers=3
         )
         # self.fnm4 = FNF1d(
         #     modes1=4, width=32, width_final=64, d_in=2, d_out=1, n_layers=3
