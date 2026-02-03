@@ -5,13 +5,13 @@
 
 # Number of GPUs 
 # SBATCH --constraint="cascadelake"
-# SBATCH --partition gpu
-# SBATCH --gres gpu:nvidia_l40s:1
+#SBATCH --partition gpu
+#SBATCH --gres gpu:nvidia_l40s:1
 
 # Wall time: maxctivate base
 # Maximum allowed run time
-#SBATCH --time=00:30:00
-#SBATCH --qos debug
+#SBATCH --time=04:30:00
+# SBATCH --qos debug
 
 # Send email to user
 #SBATCH --mail-user=mraj@caltech.edu
@@ -36,7 +36,8 @@ args=(
 	--lr 0.001 
 	--batch_size 200 
 	--niv 1
-	--step 1
+	--step 2
+	--final_step 2500
 )
 
 srun python evp_main.py "${args[@]}"

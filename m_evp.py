@@ -47,7 +47,7 @@ class InverseDissipationPotential(nn.Module):
         # self.picnn1 = PartiallyInputConvex(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
         # self.picnn2 = PartiallyInputConvex(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
         self.dense_network = nn.Sequential(
-            nn.Linear(2, 1000), CustomActivation(), nn.Linear(1000, 1)
+            nn.Linear(10, 1000), CustomActivation(), nn.Linear(1000, 1)
         )
 
     def forward(self, q, m_features):
@@ -101,7 +101,7 @@ class ViscoplasticMaterialModel(nn.Module):
         # )
 
         self.fnm3 = FNF1d(
-            modes1=2, width=32, width_final=64, d_in=3, d_out=1, n_layers=3
+            modes1=2, width=32, width_final=64, d_in=3, d_out=9, n_layers=3
         )
         # self.fnm4 = FNF1d(
         #     modes1=4, width=32, width_final=64, d_in=2, d_out=1, n_layers=3
