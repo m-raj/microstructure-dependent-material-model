@@ -49,15 +49,15 @@ class InverseDissipationPotential(nn.Module):
 
     def forward(self, q, m_features):
 
-        potential = self.picnn1(q, m_features)
+        # potential = self.picnn1(q, m_features)
 
-        # Y, n, edot_0 = torch.split(m_features, 1, dim=1)
-        # Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
-        # potential = torch.mean(
-        #     torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
-        #     dim=1,
-        #     keepdim=True,
-        # )
+        Y, n, edot_0 = torch.split(m_features, 1, dim=1)
+        Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
+        potential = torch.mean(
+            torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
+            dim=1,
+            keepdim=True,
+        )
         return potential.squeeze(-1)
 
     def compute_derivative(self, q, m_features):
