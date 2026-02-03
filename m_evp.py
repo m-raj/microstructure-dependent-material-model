@@ -44,20 +44,26 @@ class EnergyFunction(nn.Module):
 class InverseDissipationPotential(nn.Module):
     def __init__(self):
         super(InverseDissipationPotential, self).__init__()
-        self.picnn1 = PartiallyInputConvex(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
+        # self.picnn1 = PartiallyInputConvex(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
         # self.picnn2 = PartiallyInputConvex(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
+        self.dense_network = nn.Sequential(
+            nn.Linear(2, 1000), CustomActivation(), nn.Linear(1000, 1)
+        )
 
     def forward(self, q, m_features):
 
+        features = torch.cat((q, m_features), dim=1)
+        potential = self.dense_network(features)
+
         # potential = self.picnn1(q, m_features)
 
-        Y, n, edot_0 = torch.split(m_features, 1, dim=1)
-        Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
-        potential = torch.mean(
-            torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
-            dim=1,
-            keepdim=True,
-        )
+        # Y, n, edot_0 = torch.split(m_features, 1, dim=1)
+        # Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
+        # potential = torch.mean(
+        #     torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
+        #     dim=1,
+        #     keepdim=True,
+        # )
         return potential.squeeze(-1)
 
     def compute_derivative(self, q, m_features):
@@ -95,7 +101,7 @@ class ViscoplasticMaterialModel(nn.Module):
         # )
 
         self.fnm3 = FNF1d(
-            modes1=4, width=32, width_final=64, d_in=3, d_out=1, n_layers=3
+            modes1=2, width=32, width_final=64, d_in=3, d_out=1, n_layers=3
         )
         # self.fnm4 = FNF1d(
         #     modes1=4, width=32, width_final=64, d_in=2, d_out=1, n_layers=3
