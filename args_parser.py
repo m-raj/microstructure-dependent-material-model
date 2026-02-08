@@ -86,4 +86,9 @@ def parse_args():
     parser.add_argument(
         "--final_step", type=int, default=5000, help="Final time step for the data"
     )
+    parser.add_argument("--out_dim", type=int)
+
+    parser.add_argument("--modes", type=int)
+    parser.add_argument("--z_dim", type=int)
+    parser.add_argument("--u_dim", type=int)
     return parser.parse_args()

@@ -42,9 +42,9 @@ class EnergyFunction(nn.Module):
 
 
 class InverseDissipationPotential(nn.Module):
-    def __init__(self):
+    def __init__(self, out_dim, z_dim, u_dim):
         super(InverseDissipationPotential, self).__init__()
-        self.picnn1 = PartiallyInputConvex(y_dim=1, x_dim=2, z_dim=50, u_dim=50)
+        self.picnn1 = PartiallyInputConvex(y_dim=1, x_dim=out_dim, z_dim=z_dim, u_dim=u_dim)
         # self.picnn2 = PartiallyInputConvex(y_dim=1, x_dim=1, z_dim=50, u_dim=50)
         # self.dense_network = nn.Sequential(
         #     nn.Linear(10, 1000), CustomActivation(), nn.Linear(1000, 1)
@@ -83,6 +83,10 @@ class ViscoplasticMaterialModel(nn.Module):
         dissipation_input_dim=None,
         dissipation_hidden_dim=None,
         dt=None,
+        out_dim=None,
+        modes=None,
+        z_dim=None,
+        u_dim=None
     ):
         super(ViscoplasticMaterialModel, self).__init__()
         self.niv = energy_input_dim[1]
@@ -90,7 +94,7 @@ class ViscoplasticMaterialModel(nn.Module):
             self.niv, "Number of internal variables in the viscoplastic material model."
         )
         self.energy_function = EnergyFunction()
-        self.dissipation_potential = InverseDissipationPotential()
+        self.dissipation_potential = InverseDissipationPotential(out_dim=out_dim, z_dim=z_dim, u_dim=u_dim)
         self.dt = dt  # Time step size
 
         # self.fnm1 = FNF1d(
@@ -101,7 +105,7 @@ class ViscoplasticMaterialModel(nn.Module):
         # )
 
         self.fnm3 = FNF1d(
-            modes1=2, width=32, width_final=64, d_in=3, d_out=2, n_layers=3
+            modes1=modes, width=32, width_final=64, d_in=3, d_out=out_dim, n_layers=3
         )
         # self.fnm4 = FNF1d(
         #     modes1=4, width=32, width_final=64, d_in=2, d_out=1, n_layers=3

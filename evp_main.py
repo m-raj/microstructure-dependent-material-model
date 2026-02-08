@@ -93,6 +93,10 @@ if __name__ == "__main__":
         dissipation_input_dim,
         dissipation_hidden_dim,
         dt=args.step / 5000.0,
+        out_dim=args.out_dim,
+        modes=args.modes,
+        z_dim=args.z_dim,
+        u_dim=args.u_dim
     ).to(device)
 
     epochs = args.epochs
@@ -124,6 +128,7 @@ if __name__ == "__main__":
         logger=wandb_logger,
         inference_mode=False,
         num_sanity_val_steps=0,
+        log_every_n_steps=1,
     )
 
     trainer.fit(lit, train_dataloader, val_dataloader)
