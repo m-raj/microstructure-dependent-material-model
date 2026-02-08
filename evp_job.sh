@@ -6,7 +6,7 @@
 # Number of GPUs 
 # SBATCH --constraint="cascadelake"
 #SBATCH --partition gpu
-#SBATCH --gres gpu:nvidia_l40s:1
+#SBATCH --gres gpu:p100:1
 
 # Wall time: maxctivate base
 # Maximum allowed run time
@@ -24,7 +24,7 @@ args=(
 	--run_id $1
 	--mode online 
 	--device cuda 
-	--data_path evp_data1.txt
+	--data_path evp_data.txt
 #	--encoder_latent_dim 15
 #	--encoder_hidden_dim 200
 #	--encoder_epochs 1 
