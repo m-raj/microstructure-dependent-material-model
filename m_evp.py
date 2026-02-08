@@ -51,19 +51,18 @@ class InverseDissipationPotential(nn.Module):
         # )
 
     def forward(self, q, m_features):
-
-        features = torch.cat((q, m_features), dim=1)
+        # features = torch.cat((q, m_features), dim=1)
         # potential = self.dense_network(features)
 
-        potential = self.picnn1(q, m_features)
+        # potential = self.picnn1(q, m_features)
 
-        # Y, n, edot_0 = torch.split(m_features, 1, dim=1)
-        # Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
-        # potential = torch.mean(
-        #     torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
-        #     dim=1,
-        #     keepdim=True,
-        # )
+        Y, n, edot_0 = torch.split(m_features, 1, dim=1)
+        Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
+        potential = torch.mean(
+            torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
+            dim=1,
+            keepdim=True,
+        )
         return potential.squeeze(-1)
 
     def compute_derivative(self, q, m_features):
@@ -115,10 +114,10 @@ class ViscoplasticMaterialModel(nn.Module):
         microstructure = torch.stack((Y, n, edot_0), dim=1)
         #     features1 = self.fnm1(microstructure)
         #     features2 = self.fnm2(microstructure)
-        features3 = self.fnm3(microstructure)
+        # features3 = self.fnm3(microstructure)
         # features3 = microstructure
         #     features4 = self.fnm4(microstructur
-        return features3
+        return microstructure
 
     def forward(self, e, E, Y, n, edot_0):
 
