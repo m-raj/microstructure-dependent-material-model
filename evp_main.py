@@ -88,15 +88,16 @@ if __name__ == "__main__":
     )
 
     vmm = mm.ViscoplasticMaterialModel(
-        energy_input_dim,
-        energy_hidden_dim,
-        dissipation_input_dim,
-        dissipation_hidden_dim,
+        ey_dim=1,
+        niv=args.niv,
+        eout_dim=1,
+        ez_dim=args.zdim,
+        eu_dim=args.udim,
         dt=args.step / 5000.0,
         out_dim=args.out_dim,
         modes=args.modes,
         z_dim=args.z_dim,
-        u_dim=args.u_dim
+        u_dim=args.u_dim,
     ).to(device)
 
     epochs = args.epochs
