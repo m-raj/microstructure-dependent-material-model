@@ -34,12 +34,12 @@ class ViscoelasticDataset(Dataset):
         with open(data_path, "rb") as f:
             data = pickle.load(f)
 
-        self.e = torch.tensor(data["strain"][:, ::step], dtype=torch.float64)
-        self.e_dot = torch.tensor(data["strain_rate"][:, ::step], dtype=torch.float64)
-        self.s = torch.tensor(data["stress"][:, ::step], dtype=torch.float64)
+        self.e = torch.tensor(data["strain"][:, ::step], dtype=torch.float32)
+        self.e_dot = torch.tensor(data["strain_rate"][:, ::step], dtype=torch.float32)
+        self.s = torch.tensor(data["stress"][:, ::step], dtype=torch.float32)
 
-        self.E = torch.tensor(data["E"], dtype=torch.float64)
-        self.nu = torch.tensor(data["nu"], dtype=torch.float64)
+        self.E = torch.tensor(data["E"], dtype=torch.float32)
+        self.nu = torch.tensor(data["nu"], dtype=torch.float32)
 
         self.device = device
 
@@ -78,13 +78,13 @@ class ViscoplasticDataset(Dataset):
         with open(data_path, "rb") as f:
             data = pickle.load(f)
 
-        self.e = torch.tensor(data["strain"][:, :final_step:step], dtype=torch.float64)
-        self.s = torch.tensor(data["stress"][:, :final_step:step], dtype=torch.float64)
+        self.e = torch.tensor(data["strain"][:, :final_step:step], dtype=torch.float32)
+        self.s = torch.tensor(data["stress"][:, :final_step:step], dtype=torch.float32)
 
-        self.E = torch.tensor(data["youngs_modulus"], dtype=torch.float64)
-        self.Y = torch.tensor(data["yield_stress"], dtype=torch.float64)
-        self.n = torch.tensor(data["rate_exponent"], dtype=torch.float64)
-        self.edot_0 = torch.tensor(data["rate_constant"], dtype=torch.float64)
+        self.E = torch.tensor(data["youngs_modulus"], dtype=torch.float32)
+        self.Y = torch.tensor(data["yield_stress"], dtype=torch.float32)
+        self.n = torch.tensor(data["rate_exponent"], dtype=torch.float32)
+        self.edot_0 = torch.tensor(data["rate_constant"], dtype=torch.float32)
         self.device = device
 
     def __len__(self):

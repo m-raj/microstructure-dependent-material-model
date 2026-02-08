@@ -115,7 +115,7 @@ class ViscoplasticMaterialModel(nn.Module):
 
     def microstructure_encoder(self, E, Y, n, edot_0):
         microstructure = torch.stack((Y, n, edot_0), dim=1)
-        features1 = self.fnm1(E)
+        features1 = self.fnm1(E.unsqueeze(1))
         #     features2 = self.fnm2(microstructure)
         features2 = self.fnm2(microstructure)
         # features3 = microstructure
