@@ -5,8 +5,8 @@
 
 # Number of GPUs 
 # SBATCH --constraint="cascadelake"
-#SBATCH --partition gpu
-#SBATCH --gres gpu:v100:1
+# SBATCH --partition gpu
+# SBATCH --gres gpu:p100:1
 
 # Wall time: maxctivate base
 # Maximum allowed run time
@@ -42,6 +42,7 @@ args=(
 	--out_dim 25
 	--u_dim 1000
 	--z_dim 1000
+	--loss_type adjoint
 )
 
 srun python evp_main.py "${args[@]}"
