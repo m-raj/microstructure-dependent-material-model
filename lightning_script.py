@@ -106,7 +106,7 @@ class LitVMM(LitCustomModule):
         x, y = batch
         y_hat, xi = self.model(*x)
         if self.loss_type == "adjoint":
-            kwargs = {e: x[0], E: x[1], Y: x[2], n: x[3], edot_0: x[4]}
+            kwargs = {"e": x[0], "E": x[1], "Y": x[2], "n": x[3], "edot_0": x[4]}
             loss = self.loss(y, xi=xi, **kwargs)
         else:
             loss = self.loss(y_hat, y)
