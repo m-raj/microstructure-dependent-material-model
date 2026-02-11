@@ -36,10 +36,10 @@ args=(
 	--lr 0.001 
 	--batch_size 200 
 	--niv 1
-	--step 2
+	--step 10
 	--final_step 2500
 	--modes 10
-	--out_dim 25
+	--out_dim 1
 	--u_dim 1000
 	--z_dim 1000
 	--loss_type adjoint
