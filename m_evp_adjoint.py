@@ -194,8 +194,8 @@ class ViscoplasticMaterialModel(nn.Module):
             retain_graph=True,
         )[0]
         e.requires_grad_(False)
-        xi.requires_grad_(False)
-        xi_dot.requires_grad_(False)
+        xi = xi.detach()
+        xi_dot = xi_dot.detach()
         with torch.no_grad():
             lam = torch.zeros_like(xi)
             N = xi.shape[1]
