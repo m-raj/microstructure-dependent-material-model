@@ -10,8 +10,8 @@
 
 # Wall time: maxctivate base
 # Maximum allowed run time
-#SBATCH --time=24:30:00
-# SBATCH --qos debug
+#SBATCH --time=00:30:00
+#SBATCH --qos debug
 
 # Send email to user
 #SBATCH --mail-user=mraj@caltech.edu
@@ -30,7 +30,7 @@ args=(
 #	--encoder_epochs 1 
 #	--encoder_batch_size 1000 
 #	--encoder_lr 0.001 
-	--material_model m_evp 
+	--material_model m_evp_adjoint 
 	--hidden_dim 150
 	--epochs 2000
 	--lr 0.001 
@@ -45,5 +45,3 @@ args=(
 )
 
 srun python evp_main.py "${args[@]}"
-	
-
