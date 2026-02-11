@@ -71,13 +71,15 @@ class LitVMM(LitCustomModule):
         self.loss_type = loss_type
         self.lr = lr
 
-    def loss(self, y_hat, y):
+    def loss(self, y, y_hat=None, **kwargs):
         if self.loss_type == "mse":
             loss = F.mse_loss(y_hat, y, reduction="mean")
             return loss
         if self.loss_type == "mae":
             loss = F.l1_loss(y_hat, y, reduction="mean")
             return loss
+        if self.loss_type == "adjoint":
+            loss = self.model.adjoint_loss(y, **kwargs)
         elif self.loss_type == "weighted_mse":
             den = torch.square(y) + 1e-6
             num = F.mse_loss(y_hat, y, reduction="none")
@@ -102,8 +104,12 @@ class LitVMM(LitCustomModule):
 
     def training_step(self, batch):
         x, y = batch
-        y_hat, _ = self.model(*x)
-        loss = self.loss(y_hat, y)
+        y_hat, xi = self.model(*x)
+        if self.loss_type == "adjoint":
+            kwargs = {e: x[0], E: x[1], Y: x[2], n: x[3], edot_0: x[4]}
+            loss = self.loss(y, xi=xi, **kwargs)
+        else:
+            loss = self.loss(y_hat, y)
         rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
         self.train_metrics["mse"].update(loss)
         self.train_metrics["mre"].update(rel_error)
