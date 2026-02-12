@@ -100,9 +100,17 @@ class ViscoplasticMaterialModel(nn.Module):
         modes=None,
         z_dim=None,
         u_dim=None,
+        tol=1e-3,
+        lr=0.001,
+        iter_limit=30,
+        method=None,
     ):
         super(ViscoplasticMaterialModel, self).__init__()
         self.niv = niv
+        self.tol = tol
+        self.lr = lr
+        self.iter_limit = iter_limit
+        self.method = method
         print(
             self.niv, "Number of internal variables in the viscoplastic material model."
         )
@@ -125,43 +133,52 @@ class ViscoplasticMaterialModel(nn.Module):
     def microstructure_encoder(self, E, Y, n, edot_0):
         microstructure = torch.stack((Y, n, edot_0), dim=1)
         features1 = self.fnm1(E.unsqueeze(1))
-        #     features2 = self.fnm2(microstructure)
         features2 = self.fnm2(microstructure)
-        # features3 = microstructure
-        #     features4 = self.fnm4(microstructur
         return features1, features2
 
     def forward(self, e, E, Y, n, edot_0):
         stress = []
         xi = [torch.zeros(e.shape[0], self.niv, dtype=e.dtype, device=e.device)]
         m_features1, m_features2 = self.microstructure_encoder(E, Y, n, edot_0)
-        tol = 1e-3
-        lr = 0.001
         e.requires_grad_(True)
         for i in tqdm.trange(0, e.shape[1]):
             xi_guess = 2 * xi[-1] - xi[-2] if i > 2 else xi[-1]
             error = float("inf")
             count = 0
-            while error > tol and count < 30:
+            while error > self.tol and count < self.iter_limit:
                 count += 1
                 xi_guess.requires_grad_(True)
                 s_eq, w_d = self.compute_energy_derivative(
                     e[:, i],
                     xi_guess,
                     m_features1,
-                    retain_graph=False,
-                    create_graph=False,
+                    retain_graph=True,
+                    create_graph=True,
                 )
+                if w_d.isnan().any():
+                    print(count, "wd", w_d.isnan().sum() / w_d.numel())
                 with torch.no_grad():
                     xi_dot_guess = (xi_guess - xi[-1]) / self.dt
                 xi_dot_guess.requires_grad_(True)
                 D_d = self.compute_dissipation_derivative(
-                    xi_dot_guess, m_features2, retain_graph=False, create_graph=False
+                    xi_dot_guess, m_features2, retain_graph=True, create_graph=True
                 )
+                if self.method == "newton":
+                    w_dd = torch.autograd.grad(w_d.sum(), xi_guess, retain_graph=False)[
+                        0
+                    ]
+                    D_dd = torch.autograd.grad(
+                        D_d.sum(), xi_dot_guess, retain_graph=False
+                    )[0]
                 with torch.no_grad():
                     gradient = w_d + D_d
+                    if self.method == "newton":
+                        double_grad = w_dd + D_dd / self.dt
+                        lr = 1.0 / double_grad
+                    else:
+                        lr = self.lr
                     xi_guess = (xi_guess - gradient * lr).detach()
-                error = torch.norm(gradient).item()
+                error = torch.mean(torch.abs(gradient)).item()
             if i < e.shape[1] - 1:
                 xi.append(xi_guess)
             stress.append(s_eq)
@@ -173,6 +190,7 @@ class ViscoplasticMaterialModel(nn.Module):
     def adjoint_loss(
         self, y_true, xi=None, e=None, E=None, Y=None, n=None, edot_0=None
     ):
+        # print(xi.shape, e.shape, E.shape, Y.shape, n.shape, edot_0.shape)
         m_features1, m_features2 = self.microstructure_encoder(E, Y, n, edot_0)
         m_features1 = m_features1.unsqueeze(1)
         m_features2 = m_features2.unsqueeze(1)

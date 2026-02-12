@@ -118,8 +118,17 @@ class LitVMM(LitCustomModule):
     def validation_step(self, batch):
         with torch.set_grad_enabled(True):
             x, y = batch
-            y_hat, _ = self.model(*x)
-            loss = self.loss(y_hat, y)
+            y_hat, xi = self.model(*x)
+            if self.loss_type == "adjoint":
+                # print("e", x[0].shape)
+                # print("E", x[1].shape)
+                # print("Y", x[2].shape)
+                # print("n", x[3].shape)
+                # print("edot_0", x[4].shape)
+                kwargs = {"e": x[0], "E": x[1], "Y": x[2], "n": x[3], "edot_0": x[4]}
+                loss = self.loss(y, xi=xi, **kwargs)
+            else:
+                loss = self.loss(y_hat, y)
             rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
             self.val_metrics["mse"].update(loss)
             self.val_metrics["mre"].update(rel_error)
@@ -128,8 +137,12 @@ class LitVMM(LitCustomModule):
     def test_step(self, batch):
         with torch.set_grad_enabled(True):
             x, y = batch
-            y_hat, _ = self.model(*x)
-            loss = self.loss(y_hat, y)
+            y_hat, xi = self.model(*x)
+            if self.loss_type == "adjoint":
+                kwargs = {"e": x[0], "E": x[1], "Y": x[2], "n": x[3], "edot_0": x[4]}
+                loss = self.loss(y, xi=xi, **kwargs)
+            else:
+                loss = self.loss(y_hat, y)
             rel_error = self.loss_function.L2RelativeError(y_hat, y, reduction=None)
             self.test_metrics["mse"].update(loss)
             self.test_metrics["mre"].update(rel_error)
