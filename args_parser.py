@@ -91,4 +91,8 @@ def parse_args():
     parser.add_argument("--modes", type=int)
     parser.add_argument("--z_dim", type=int)
     parser.add_argument("--u_dim", type=int)
+    parser.add_argument("--tol", type=float)
+    parser.add_argument("--solver_lr", type=float)
+    parser.add_argument("--iter_limit", type=int)
+    parser.add_argument("--method", type=str, default=None)
     return parser.parse_args()

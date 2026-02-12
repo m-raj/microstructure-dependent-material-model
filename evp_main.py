@@ -98,6 +98,10 @@ if __name__ == "__main__":
         modes=args.modes,
         z_dim=args.z_dim,
         u_dim=args.u_dim,
+        tol=args.tol,
+        lr=args.solver_lr,
+        iter_limit=args.iter_limit,
+        method=args.method
     ).to(device)
 
     epochs = args.epochs
