@@ -17,16 +17,24 @@ class CustomActivation(nn.Module):
 
 
 class EnergyFunction(nn.Module):
-    def __init__(self, y_dim, out_dim, z_dim, u_dim):
+    def __init__(self, y_dim, out_dim, z_dim, u_dim, bias1=False, bias2=False):
         super(EnergyFunction, self).__init__()
 
-        self.picnn1 = PartiallyInputConvex(
-            y_dim=y_dim, x_dim=out_dim, z_dim=z_dim, u_dim=u_dim
-        )
+        # self.picnn1 = PartiallyInputConvex(
+        #     y_dim=y_dim,
+        #     x_dim=out_dim,
+        #     z_dim=z_dim,
+        #     u_dim=u_dim,
+        #     bias1=bias1,
+        #     bias2=bias2,
+        # )
+        self.parameter = nn.Parameter(torch.tensor(0.25))
 
     def forward(self, u, v, m_features):
-        features = torch.cat((v, m_features), dim=-1)
-        energy = self.picnn1(u, features)
+        # print(m_features.shape, v.shape)
+        # features = torch.cat((v, m_features), dim=-1)
+        energy = self.parameter * m_features * torch.pow(u - v, 2)
+        # energy = self.picnn1(u, features)
         return energy.squeeze(-1)
 
     def compute_derivative(
@@ -48,11 +56,11 @@ class EnergyFunction(nn.Module):
         return grad_u, grad_v
 
 
-class InverseDissipationPotential(nn.Module):
-    def __init__(self, niv, out_dim, z_dim, u_dim):
-        super(InverseDissipationPotential, self).__init__()
+class DissipationPotential(nn.Module):
+    def __init__(self, niv, out_dim, z_dim, u_dim, bias1=False, bias2=False):
+        super(DissipationPotential, self).__init__()
         self.picnn1 = PartiallyInputConvex(
-            y_dim=niv, x_dim=out_dim, z_dim=z_dim, u_dim=u_dim
+            y_dim=niv, x_dim=out_dim, z_dim=z_dim, u_dim=u_dim, bias1=bias1, bias2=bias2
         )
         # self.picnn1 = PartiallyInputConvex(
         #     y_dim=1, x_dim=out_dim, z_dim=z_dim, u_dim=u_dim
@@ -60,10 +68,13 @@ class InverseDissipationPotential(nn.Module):
         # self.dense_network = nn.Sequential(
         #     nn.Linear(10, 1000), CustomActivation(), nn.Linear(1000, 1)
         # )
+        self.parameter = nn.Parameter(torch.tensor(1.0))
 
     def forward(self, q, m_features):
         # features = torch.cat((q, m_features), dim=1)
         # potential = self.dense_network(features)
+
+        # potential = self.parameter * m_features * torch.pow(q, 2)
 
         potential = self.picnn1(q, m_features)
 
@@ -115,16 +126,21 @@ class ViscoplasticMaterialModel(nn.Module):
             self.niv, "Number of internal variables in the viscoplastic material model."
         )
         self.energy_function = EnergyFunction(
-            y_dim=ey_dim, out_dim=eout_dim + niv, z_dim=ez_dim, u_dim=eu_dim
+            y_dim=ey_dim,
+            out_dim=eout_dim + niv,
+            z_dim=ez_dim,
+            u_dim=eu_dim,
+            bias1=False,
+            bias2=True,
         )
-        self.dissipation_potential = InverseDissipationPotential(
-            niv=niv, out_dim=out_dim, z_dim=z_dim, u_dim=u_dim
+        self.dissipation_potential = DissipationPotential(
+            niv=niv, out_dim=out_dim, z_dim=z_dim, u_dim=u_dim, bias1=False, bias2=False
         )
         self.dt = dt  # Time step size
 
-        self.fnm1 = FNF1d(
-            modes1=modes, width=32, width_final=64, d_in=1, d_out=eout_dim, n_layers=3
-        )
+        # self.fnm1 = FNF1d(
+        #     modes1=modes, width=32, width_final=64, d_in=1, d_out=eout_dim, n_layers=3
+        # )
 
         self.fnm2 = FNF1d(
             modes1=modes, width=32, width_final=64, d_in=3, d_out=out_dim, n_layers=3
@@ -132,8 +148,10 @@ class ViscoplasticMaterialModel(nn.Module):
 
     def microstructure_encoder(self, E, Y, n, edot_0):
         microstructure = torch.stack((Y, n, edot_0), dim=1)
-        features1 = self.fnm1(E.unsqueeze(1))
+        features1 = 1 / torch.mean(1 / E, axis=1, keepdim=True)
+        # features1 = self.fnm1(E.unsqueeze(1))
         features2 = self.fnm2(microstructure)
+        # features2 = features1
         return features1, features2
 
     def forward(self, e, E, Y, n, edot_0):
@@ -142,7 +160,10 @@ class ViscoplasticMaterialModel(nn.Module):
         m_features1, m_features2 = self.microstructure_encoder(E, Y, n, edot_0)
         e.requires_grad_(True)
         for i in tqdm.trange(0, e.shape[1]):
+            # Initialization of internal variable at the current time step using extrapolation from previous two time steps
             xi_guess = 2 * xi[-1] - xi[-2] if i > 2 else xi[-1]
+
+            # Iteratively solve for internal variable at the current time step using gradient descent or Newton's method
             error = float("inf")
             count = 0
             while error > self.tol and count < self.iter_limit:
@@ -183,6 +204,7 @@ class ViscoplasticMaterialModel(nn.Module):
                 xi.append(xi_guess)
             stress.append(s_eq)
         e.requires_grad_(False)
+        # Return stress and internal Variable
         stress = torch.stack(stress, dim=1)
         xi = torch.stack(xi, dim=1)
         return stress, xi
@@ -190,46 +212,65 @@ class ViscoplasticMaterialModel(nn.Module):
     def adjoint_loss(
         self, y_true, xi=None, e=None, E=None, Y=None, n=None, edot_0=None
     ):
-        # print(xi.shape, e.shape, E.shape, Y.shape, n.shape, edot_0.shape)
+        with torch.no_grad():
+            xi_dot = (
+                torch.diff(xi, n=1, dim=1, prepend=torch.zeros_like(xi[:, [0]]))
+                / self.dt
+            )
+
         m_features1, m_features2 = self.microstructure_encoder(E, Y, n, edot_0)
         m_features1 = m_features1.unsqueeze(1)
         m_features2 = m_features2.unsqueeze(1)
         m_features1 = m_features1.expand(e.shape)
-        xi_dot = (
-            torch.diff(xi, n=1, dim=1, prepend=torch.zeros_like(xi[:, :1])) / self.dt
-        )
         m_features2 = m_features2.expand(xi_dot.shape)
 
-        e.requires_grad_(True)
-        xi.requires_grad_(True)
-        xi_dot.requires_grad_(True)
-        w_e, w_xi = self.compute_energy_derivative(e, xi, m_features1)
-        w_exi, w_xi2 = torch.autograd.grad(w_xi.sum(), [e, xi], retain_graph=True)
-        d_xidot = self.compute_dissipation_derivative(xi_dot, m_features2)
-        d_xidot2 = torch.autograd.grad(
-            d_xidot.sum(),
-            xi_dot,
-            retain_graph=True,
-        )[0]
-        e.requires_grad_(False)
-        xi = xi.detach()
-        xi_dot = xi_dot.detach()
-        with torch.no_grad():
-            lam = torch.zeros_like(xi)
-            N = xi.shape[1]
-            C = -2 * (w_e - y_true) * w_exi
-            B = (
-                torch.diff(d_xidot2, dim=1, prepend=torch.zeros_like(d_xidot2[:, :1]))
-                / self.dt
-                - w_xi2
-            )
-            A = d_xidot2
-            for i in reversed(range(1, N)):
-                lam[:, i - 1] = (self.dt * C[:, i - 1] - lam[:, i] * A[:, i - 1]) / (
-                    self.dt * B[:, i - 1] - A[:, i - 1]
-                )
+        f = lambda u, p: torch.square(
+            torch.autograd.grad(
+                self.energy_function(u, p, m_features1).sum(),
+                u,
+                retain_graph=True,
+                create_graph=True,
+            )[0]
+            - y_true
+        )
 
-        return F.mse_loss(w_e, y_true) + torch.mean(lam * (w_xi + d_xidot))
+        g = (
+            lambda u, p, q: torch.autograd.grad(
+                self.energy_function(u, p, m_features1).sum(),
+                p,
+                retain_graph=True,
+                create_graph=True,
+            )[0]
+            + torch.autograd.grad(
+                self.dissipation_potential(q, m_features2).sum(),
+                q,
+                retain_graph=True,
+                create_graph=True,
+            )[0]
+        )
+
+        objective = lambda u, p, q, lam: torch.mean(f(u, p) + lam * g(u, p, q))
+
+        e.requires_grad_(True)
+        xi_dot.requires_grad_(True)
+        xi.requires_grad_(True)
+
+        (A,) = torch.autograd.grad(f(e, xi).sum(), xi)
+        B, C = torch.autograd.grad(g(e, xi, xi_dot).sum(), [xi, xi_dot])
+
+        P = -B / C
+        Q = A / C
+
+        lam = torch.zeros_like(xi)
+        print(lam.shape)
+        for n in reversed(range(1, lam.shape[1])):
+            lam[:, n - 1] = (P[:, n] * self.dt + 1) * lam[:, n] - Q[:, n] * self.dt
+
+        obj = objective(e, xi, xi_dot, lam)
+        print(
+            torch.mean(f(e, xi)).item(), torch.mean(g(e, xi, xi_dot)).item(), obj.item()
+        )
+        return obj
 
     def compute_energy_derivative(self, u, v, m_features, **kwargs):
         return self.energy_function.compute_derivative(u, v, m_features, **kwargs)

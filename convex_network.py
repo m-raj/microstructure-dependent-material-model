@@ -26,9 +26,12 @@ class ConvexNetwork(nn.Module):
 
 
 class PartiallyInputConvexLayer(nn.Module):
-    def __init__(self, y_dim, u_dim, out_dim, z_dim=None):
+    def __init__(self, y_dim, u_dim, out_dim, z_dim=None, bias1=False, bias2=False):
         super(PartiallyInputConvexLayer, self).__init__()
-        self.fc1 = nn.Linear(u_dim, out_dim)
+        self.bias1 = bias1
+        self.bias2 = bias2
+        if self.bias2:
+            self.fc1 = nn.Linear(u_dim, out_dim, bias=self.bias1)
         self.fc2 = nn.Linear(u_dim, y_dim)
         if z_dim:
             self.fc3 = nn.Linear(u_dim, z_dim)
@@ -41,7 +44,7 @@ class PartiallyInputConvexLayer(nn.Module):
         """
         Convex in y, not in u.
         """
-        l1 = self.fc1(u)
+        l1 = self.fc1(u) if self.bias2 else 0
         l2 = self.fc2(u)
         if z is not None:
             l3 = F.softplus(self.fc3(u))
@@ -53,14 +56,17 @@ class PartiallyInputConvexLayer(nn.Module):
 
 
 class PartiallyInputConvex(nn.Module):
-    def __init__(self, y_dim, x_dim, z_dim, u_dim):
+    def __init__(self, y_dim, x_dim, z_dim, u_dim, bias1, bias2):
         super(PartiallyInputConvex, self).__init__()
         self.fc1 = nn.Linear(x_dim, u_dim)
-
         self.activation = ReluSquare()
 
-        self.picnn1 = PartiallyInputConvexLayer(y_dim, x_dim, z_dim, z_dim=None)
-        self.picnn2 = PartiallyInputConvexLayer(y_dim, u_dim, 1, z_dim=z_dim)
+        self.picnn1 = PartiallyInputConvexLayer(
+            y_dim, x_dim, z_dim, z_dim=None, bias1=True, bias2=True
+        )
+        self.picnn2 = PartiallyInputConvexLayer(
+            y_dim, u_dim, 1, z_dim=z_dim, bias1=bias1, bias2=bias2
+        )
 
     def forward(self, y, x):
         """
@@ -73,36 +79,36 @@ class PartiallyInputConvex(nn.Module):
         return out.squeeze(-1)
 
 
-class LORAweightsRank(nn.Module):
-    def __init__(self, input_size, hidden_size, dim1, dim2, rank):
-        super(LORAweightsRank, self).__init__()
+# class LORAweightsRank(nn.Module):
+#     def __init__(self, input_size, hidden_size, dim1, dim2, rank):
+#         super(LORAweightsRank, self).__init__()
 
-        assert rank > 0, "Rank must be positive"
-        assert rank <= min(
-            dim1, dim2
-        ), "Rank must be less than or equal to min(dim1, dim2)"
+#         assert rank > 0, "Rank must be positive"
+#         assert rank <= min(
+#             dim1, dim2
+#         ), "Rank must be less than or equal to min(dim1, dim2)"
 
-        self.fc1 = nn.Parameter(torch.randn(rank, input_size, hidden_size))
-        self.fc2 = nn.Parameter(torch.randn(rank, hidden_size, dim1))
+#         self.fc1 = nn.Parameter(torch.randn(rank, input_size, hidden_size))
+#         self.fc2 = nn.Parameter(torch.randn(rank, hidden_size, dim1))
 
-        self.fc3 = nn.Parameter(torch.randn(rank, input_size, hidden_size))
-        self.fc4 = nn.Parameter(torch.randn(rank, hidden_size, dim2))
+#         self.fc3 = nn.Parameter(torch.randn(rank, input_size, hidden_size))
+#         self.fc4 = nn.Parameter(torch.randn(rank, hidden_size, dim2))
 
-        self.activation = nn.ReLU()
+#         self.activation = nn.ReLU()
 
-    def return_weights(self, x):
-        row = torch.einsum("bi,rij->brj", x, self.fc1)
-        row = self.activation(row)
-        row = torch.einsum("brj,rjk->brk", row, self.fc2)
+#     def return_weights(self, x):
+#         row = torch.einsum("bi,rij->brj", x, self.fc1)
+#         row = self.activation(row)
+#         row = torch.einsum("brj,rjk->brk", row, self.fc2)
 
-        col = torch.einsum("bi,rij->brj", x, self.fc3)
-        col = self.activation(col)
-        col = torch.einsum("brj,rjk->brk", col, self.fc4)
+#         col = torch.einsum("bi,rij->brj", x, self.fc3)
+#         col = self.activation(col)
+#         col = torch.einsum("brj,rjk->brk", col, self.fc4)
 
-        lora_weights = torch.einsum("bri,brj->brij", row, col)
-        lora_weights = lora_weights.sum(dim=1)
-        return lora_weights
+#         lora_weights = torch.einsum("bri,brj->brij", row, col)
+#         lora_weights = lora_weights.sum(dim=1)
+#         return lora_weights
 
-    def forward(self, x, y=None):
-        lora_weights = self.return_weights(x)
-        return torch.einsum("bj, bji->bi", y, lora_weights)
+#     def forward(self, x, y=None):
+#         lora_weights = self.return_weights(x)
+#         return torch.einsum("bj, bji->bi", y, lora_weights)
