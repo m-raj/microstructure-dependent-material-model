@@ -159,7 +159,7 @@ class ViscoplasticMaterialModel(nn.Module):
         xi = [torch.zeros(e.shape[0], self.niv, dtype=e.dtype, device=e.device)]
         m_features1, m_features2 = self.microstructure_encoder(E, Y, n, edot_0)
         e.requires_grad_(True)
-        for i in tqdm.trange(0, e.shape[1]):
+        for i in range(0, e.shape[1]):
             # Initialization of internal variable at the current time step using extrapolation from previous two time steps
             xi_guess = 2 * xi[-1] - xi[-2] if i > 2 else xi[-1]
 
@@ -262,14 +262,14 @@ class ViscoplasticMaterialModel(nn.Module):
         Q = A / C
 
         lam = torch.zeros_like(xi)
-        print(lam.shape)
+        # print(lam.shape)
         for n in reversed(range(1, lam.shape[1])):
             lam[:, n - 1] = (P[:, n] * self.dt + 1) * lam[:, n] - Q[:, n] * self.dt
 
         obj = objective(e, xi, xi_dot, lam)
-        print(
-            torch.mean(f(e, xi)).item(), torch.mean(g(e, xi, xi_dot)).item(), obj.item()
-        )
+        # print(
+        #    torch.mean(f(e, xi)).item(), torch.mean(g(e, xi, xi_dot)).item(), obj.item()
+        # )
         return obj
 
     def compute_energy_derivative(self, u, v, m_features, **kwargs):

@@ -125,6 +125,8 @@ if __name__ == "__main__":
         loss_type=args.loss_type,
         lr=args.lr,
     )
+    wandb_logger.watch(vmm, log='all', log_freq=1)
+
     trainer = lp.Trainer(
         max_epochs=epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
