@@ -18,15 +18,22 @@ class CustomActivation(nn.Module):
 class EnergyFunction(nn.Module):
     def __init__(self, input_dim=4, hidden_dim=50):
         super(EnergyFunction, self).__init__()
-        self.nn = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            CustomActivation(),
-            nn.Linear(hidden_dim, 1),
+        # self.nn = nn.Sequential(
+        #     nn.Linear(input_dim, hidden_dim),
+        #     CustomActivation(),
+        #     nn.Linear(hidden_dim, 1),
+        # )
+
+        self.picnn = PartiallyInputConvex(
+            y_dim=1, x_dim=3, z_dim=hidden_dim, u_dim=hidden_dim
         )
+        self.icnn = ConvexNetwork(input_dim=input_dim, hidden_dim=hidden_dim)
 
     def forward(self, u, v, m_features):
-        features = torch.cat((u, v, *m_features), dim=-1)
-        energy = self.nn(features)
+        energy = self.nn(torch.cat((u, v, *m_features), dim=-1))
+        # energy = self.picnn(u, torch.cat((v, *m_features), dim=-1))
+        # energy = self.icnn(torch.cat(u, v, *m_features, dim=-1))
+
         return energy.squeeze(-1)
 
     def compute_derivative(self, u, v, m_features):
