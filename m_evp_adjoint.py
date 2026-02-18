@@ -206,9 +206,12 @@ class ViscoplasticMaterialModel(nn.Module):
                 assert not (
                     gradient.isnan().any()
                 ), "NaN detected in gradient during solver iterations."
-                gradient = gradient.clip(-1, 1) / 400
+                # gradient = gradient.clip(-1, 1) / 400
                 # print(torch.norm(gradient).item())
                 xi_guess = (xi_guess - self.lr * gradient).detach()
+                assert not (
+                    xi_guess.isnan().any()
+                ), "NaN detected in xi_guess after update during solver iterations."
             xi.append(xi_guess.detach())
         xi = torch.stack(xi, dim=1)
         m_features1 = m_features1.unsqueeze(1).expand(
@@ -282,18 +285,26 @@ class ViscoplasticMaterialModel(nn.Module):
 
         (Q,) = torch.autograd.grad(f(e, xi).sum(), xi)
         B, C = torch.autograd.grad(g(e, xi, xi_dot).sum(), [xi, xi_dot])
-        C.nan_to_num_(nan=e.shape[1])
-        C[C == 0] = 1e-4
+        # C.nan_to_num_(nan=e.shape[1])
+        # C[C == 0] = 1e-4
         P = B / C
 
         lam = torch.zeros_like(xi)
         for n in reversed(range(1, lam.shape[1])):
             lam[:, n - 1] = (
-                (-P[:, n] * self.dt + 1) * lam[:, n] * C[:, n] - Q[:, n] * self.dt
+                lam[:, n] * (C[:, n] - B[:, n - 1] * self.dt) - Q[:, n] * self.dt
             ) / C[:, n - 1]
             # if lam[:, n - 1].isinf().any():
             #     print("Infinity detected in lambda computation at time step", n - 1)
             #     print(xi_dot[:, n - 1])
+
+        # for n in reversed(range(1, lam.shape[1])):
+        #     lam[:, n - 1] = (
+        #         lam[:, n] * (C[:, n] - B[:, n] * self.dt) - Q[:, n] * self.dt
+        #     ) / C[:, n - 1]
+        #     # if lam[:, n - 1].isinf().any():
+        #     #     print("Infinity detected in lambda computation at time step", n - 1)
+        #     #     print(xi_dot[:, n - 1])
 
         obj = objective(e, xi, xi_dot, lam)
         # print(
@@ -303,7 +314,7 @@ class ViscoplasticMaterialModel(nn.Module):
         #     g(e, xi, xi_dot).isnan().any(),
         # )
         # return C, lam, f(e, xi), g(e, xi, xi_dot), obj
-        assert not (obj.isnan().any()), "NaN detected in adjoint loss computation."
+        # assert not (obj.isnan().any()), "NaN detected in adjoint loss computation."
 
         return obj
 
