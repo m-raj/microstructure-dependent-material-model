@@ -99,7 +99,7 @@ if __name__ == "__main__":
         z_dim=args.z_dim,
         u_dim=args.u_dim,
         tol=args.tol,
-        lr=args.solver_lr,
+        lr=args.step/50000,
         iter_limit=args.iter_limit,
         method=args.method
     ).to(device)

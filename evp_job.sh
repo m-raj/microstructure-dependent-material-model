@@ -10,7 +10,7 @@
 
 # Wall time: maxctivate base
 # Maximum allowed run time
-#SBATCH --time=24:30:00
+#SBATCH --time=8:30:00
 # SBATCH --qos debug
 
 # Send email to user
@@ -28,18 +28,18 @@ args=(
 	--material_model m_evp_adjoint 
 	--hidden_dim 150
 	--epochs 2000
-	--lr 0.0001 
+	--lr 0.001 
 	--batch_size 400 
 	--niv 1
 	--step 20
 	--final_step 5000
 	--modes 3
 	--out_dim 1
-	--u_dim 10
-	--z_dim 10
+	--u_dim 50
+	--z_dim 50
 	--loss_type adjoint
 	--tol 1e-4
-	--solver_lr 0.0005
+	--solver_lr 0.0004
 	--iter_limit 100
 #	--method newton
 )
