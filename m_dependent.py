@@ -105,7 +105,7 @@ class ViscoelasticMaterialModel(nn.Module):
         microstructure = torch.stack((E, nu), dim=1)
         features1 = self.fnm1(microstructure)
         features2 = self.fnm2(microstructure)
-        features3 = self.fnm3(nu)
+        features3 = self.fnm3(nu.unsqueeze(1))
         features4 = self.fnm4(microstructure)
         return (features1, features3), (features2, features4)
 
