@@ -177,8 +177,6 @@ if __name__ == "__main__":
         energy_hidden_dim,
         dissipation_input_dim,
         dissipation_hidden_dim,
-        ae_E.encoder,
-        ae_nu.encoder,
         dt=args.step / 5000.0,
     ).to(device)
 
