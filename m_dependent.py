@@ -84,9 +84,7 @@ class ViscoelasticMaterialModel(nn.Module):
         super(ViscoelasticMaterialModel, self).__init__()
         self.niv = energy_input_dim[1]
         self.energy_function = EnergyFunction(energy_input_dim, energy_hidden_dim)
-        self.dissipation_potential = InverseDissipationPotential(
-            dissipation_input_dim, dissipation_hidden_dim
-        )
+        self.dissipation_potential = InverseDissipationPotential()
         self.dt = dt  # Time step size
 
         self.fnm1 = FNF1d(
