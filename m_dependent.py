@@ -19,15 +19,15 @@ class EnergyFunction(nn.Module):
     def __init__(self, input_dim=4, hidden_dim=50):
         super(EnergyFunction, self).__init__()
         self.nn = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
+            nn.Linear(4, 50),
             CustomActivation(),
-            nn.Linear(hidden_dim, 1),
+            nn.Linear(50, 1),
         )
 
         # self.picnn = PartiallyInputConvex(
-        #    y_dim=1, x_dim=3, z_dim=hidden_dim, u_dim=hidden_dim, bias1=True, bias2=True
+        #    y_dim=1, x_dim=3, z_dim=50, u_dim=50, bias1=True, bias2=True
         # )
-        # self.icnn = ConvexNetwork(input_dim=input_dim, hidden_dim=hidden_dim)
+        # self.icnn = ConvexNetwork(input_dim=4, hidden_dim=50)
 
     def forward(self, u, v, m_features):
         energy = self.nn(torch.cat((u, v, *m_features), dim=-1))
