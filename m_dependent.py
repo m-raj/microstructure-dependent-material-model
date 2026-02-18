@@ -18,21 +18,21 @@ class CustomActivation(nn.Module):
 class EnergyFunction(nn.Module):
     def __init__(self, input_dim=4, hidden_dim=50):
         super(EnergyFunction, self).__init__()
-        self.nn = nn.Sequential(
-            nn.Linear(4, 50),
-            CustomActivation(),
-            nn.Linear(50, 1),
-        )
+        # self.nn = nn.Sequential(
+        #    nn.Linear(4, 50),
+        #    CustomActivation(),
+        #    nn.Linear(50, 1),
+        # )
 
         # self.picnn = PartiallyInputConvex(
-        #    y_dim=1, x_dim=3, z_dim=50, u_dim=50, bias1=True, bias2=True
+        #         y_dim=1, x_dim=3, z_dim=50, u_dim=50, bias1=True, bias2=True
         # )
-        # self.icnn = ConvexNetwork(input_dim=4, hidden_dim=50)
+        self.icnn = ConvexNetwork(input_dim=4, hidden_dim=100)
 
     def forward(self, u, v, m_features):
-        energy = self.nn(torch.cat((u, v, *m_features), dim=-1))
+        # energy = self.nn(torch.cat((u, v, *m_features), dim=-1))
         # energy = self.picnn(u, torch.cat((v, *m_features), dim=-1))
-        # energy = self.icnn(torch.cat(u, v, *m_features, dim=-1))
+        energy = self.icnn(torch.cat((u, v, *m_features), dim=-1))
 
         return energy.squeeze(-1)
 
