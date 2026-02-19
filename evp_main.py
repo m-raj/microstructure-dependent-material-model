@@ -58,13 +58,13 @@ if __name__ == "__main__":
         "test_indices": testset.indices,
     }
     train_dataloader = DataLoader(
-        trainset, batch_size=args.batch_size, shuffle=True, num_workers=0
+        trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers
     )
     val_dataloader = DataLoader(
-        valset, batch_size=args.batch_size, shuffle=False, num_workers=0
+        valset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
     )
     test_dataloader = DataLoader(
-        testset, batch_size=args.batch_size, shuffle=False, num_workers=0
+        testset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
     )
 
     loss_function = LossFunction()
