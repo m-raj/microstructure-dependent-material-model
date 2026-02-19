@@ -490,7 +490,7 @@ class LinearDecoder1d(nn.Module):
         Output shape:           (batch, out_channels, ..., nx)
         """
         # Multiply relevant Fourier modes
-        x = compl_mul(x[..., None].type(torch.cfloat), self.weights)
+        x = compl_mul(torch.complex(x[..., None]), self.weights)
 
         # Zero pad modes
         x = resize_rfft(x, s)
@@ -669,7 +669,7 @@ class LinearDecoder2d(nn.Module):
         Output shape:                   (batch, out_channels, ..., nx, ny)
         """
         # Multiply relevant Fourier modes
-        x = compl_mul(x[..., None, None].type(torch.cfloat), self.weights)
+        x = compl_mul(torch.complex(x[..., None, None]), self.weights)
 
         # Zero pad modes
         x = resize_rfft2(x, tuple(s))
