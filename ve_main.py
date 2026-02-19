@@ -123,7 +123,7 @@ if __name__ == "__main__":
         callbacks=[model_checkpoint, lr_monitor],
         logger=wandb_logger,
         inference_mode=False,
-        log_every_n_steps=1
+        log_every_n_steps=1,
     )
 
     trainer.fit(lit, train_dataloader, val_dataloader)

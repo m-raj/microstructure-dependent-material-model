@@ -28,13 +28,20 @@ class EnergyFunction(nn.Module):
         #     bias1=bias1,
         #     bias2=bias2,
         # )
+        self.nn = nn.Sequential(
+            nn.Linear(3, 50),
+            CustomActivation(),
+            nn.Linear(50, 1),
+        )
+
         # self.parameter = nn.Parameter(torch.tensor(0.25))
 
     def forward(self, u, v, m_features):
         # print(m_features.shape, v.shape)
-        # features = torch.cat((v, m_features), dim=-1)
-        energy = 0.5 * m_features * torch.pow(u - v, 2)
-        # energy = self.picnn1(u, features)
+        # energy = 0.5 * m_features * torch.pow(u - v, 2)
+        m_features = m_features.expand(*v.shape[:-1], m_features.shape[-1])
+        # energy = self.picnn1(u, torch.cat((v, m_features), dim=-1))
+        energy = self.nn(torch.cat((u, v, m_features), dim=-1))
         return energy.squeeze(-1)
 
     def compute_derivative(
@@ -68,7 +75,7 @@ class DissipationPotential(nn.Module):
         # self.dense_network = nn.Sequential(
         #     nn.Linear(10, 1000), CustomActivation(), nn.Linear(1000, 1)
         # )
-        # self.parameter = nn.Parameter(torch.randn(1000, 1))
+        # self.parameter = nn.Parameter(0.5+torch.randn(1000)**2)
 
     def forward(self, q, m_features):
         # features = torch.cat((q, m_features), dim=1)
@@ -86,6 +93,8 @@ class DissipationPotential(nn.Module):
         # power = torch.linspace(1.2, 2, q.shape[0])
         # power = power.reshape(q.shape[0], *([1] * (q.ndim - 1)))
         potential = self.picnn1(q, m_features)
+        # parameter = self.parameter.reshape(self.parameter.shape[0], *([1] * (q.ndim - 1)))
+        # potential = parameter * torch.pow(torch.abs(q), 1.5)
 
         # ("Power shape does not match q shape.")
         # # print(power.shape, q.shape)
@@ -155,18 +164,18 @@ class ViscoplasticMaterialModel(nn.Module):
         )
         self.dt = dt  # Time step size
 
-        # self.fnm1 = FNF1d(
-        #     modes1=modes, width=32, width_final=64, d_in=1, d_out=eout_dim, n_layers=3
-        # )
+        self.fnm1 = FNF1d(
+            modes1=modes, width=32, width_final=64, d_in=1, d_out=eout_dim, n_layers=3
+        )
 
         self.fnm2 = FNF1d(
-            modes1=modes, width=32, width_final=64, d_in=3, d_out=out_dim, n_layers=3
+            modes1=modes, width=32, width_final=64, d_in=2, d_out=out_dim, n_layers=3
         )
 
     def microstructure_encoder(self, E, Y, n, edot_0):
-        microstructure = torch.stack((n, Y, edot_0), dim=1)
-        features1 = 1 / torch.mean(1 / E, axis=1, keepdim=True)
-        # features1 = self.fnm1(E.unsqueeze(1))
+        microstructure = torch.stack((Y, edot_0), dim=1)
+        # features1 = 1 / torch.mean(1 / E, axis=1, keepdim=True)
+        features1 = self.fnm1(E.unsqueeze(1))
         features2 = self.fnm2(microstructure)
         # features3 = self.fnm3(torch.stack((Y, edot_0), dim=1))
         # features2 = torch.cat((features2, features3), dim=1)
@@ -180,26 +189,38 @@ class ViscoplasticMaterialModel(nn.Module):
         objective = lambda u, p, q: self.energy_function(
             u, p, m_features1
         ) + self.dt * self.dissipation_potential((p - q) / self.dt, m_features2)
-        for i in tqdm.trange(0, e.shape[1] - 1):
+        for i in range(0, e.shape[1]):
             # Initialization of internal variable at the current time step using extrapolation from previous two time steps
             with torch.no_grad():
-                if i > 1:
-                    xi_dot_guess = (xi[-1] - xi[-2]) / self.dt
+                # if i > 1:
+                #     xi_dot_guess = (xi[-1] - xi[-2]) / self.dt
+                # else:
+                #     xi_dot_guess = torch.zeros_like(xi[-1]) + 1e-4
+                # xi_guess = xi[-1]  # + self.dt * xi_dot_guess
+                if i == 0:
+                    diff = e[:, 1]
+                elif i == e.shape[1] - 1:
+                    diff = e[:, -1] - e[:, -2]
                 else:
-                    xi_dot_guess = torch.zeros_like(xi[-1]) + 1e-4
-                xi_guess = xi[-1] + self.dt * xi_dot_guess
+                    diff = e[:, i + 1] - e[:, i]
+
+                xi_guess = xi[-1] + diff / 2
+                # print(xi_guess.shape)
             gradient = torch.ones_like(xi_guess)
-            while torch.norm(gradient) > self.tol:
+            count = 1
+            error = 1
+            while error > self.tol:
                 if xi_guess.isnan().any():
                     # print("Time step", i)
                     assert not (
                         xi_guess.isnan().any()
                     ), "NaN detected in xi_guess during solver iterations."
                 xi_guess.requires_grad_(True)
-                energy = objective(e[:, i + 1], xi_guess, xi[-1])
+                energy = objective(e[:, i], xi_guess, xi[-1])
                 gradient = torch.autograd.grad(energy.sum(), xi_guess)[0]
-                if (xi_guess == 0).any():
-                    print("Zero value detected in xi_guess during solver iterations.")
+                # print(grad.shape, gradient.shape)
+                # if (xi_guess == 0).any():
+                #     print("Zero value detected in xi_guess during solver iterations.")
                 if gradient.isnan().any():
                     print("Energy", energy.mean().item())
                     print(xi_guess[gradient.isnan()])
@@ -208,10 +229,16 @@ class ViscoplasticMaterialModel(nn.Module):
                 ), "NaN detected in gradient during solver iterations."
                 # gradient = gradient.clip(-1, 1) / 400
                 # print(torch.norm(gradient).item())
-                xi_guess = (xi_guess - self.lr * gradient).detach()
+                xi_guess = (xi_guess - self.lr * gradient / count).detach()
                 assert not (
                     xi_guess.isnan().any()
                 ), "NaN detected in xi_guess after update during solver iterations."
+                if count > 1:
+                    error = torch.norm(xi_guess - xi_guess_old).item() / (
+                        torch.norm(xi_guess_old).item() + 1e-8
+                    )
+                xi_guess_old = xi_guess.clone()
+                count += 1
             xi.append(xi_guess.detach())
         xi = torch.stack(xi, dim=1)
         m_features1 = m_features1.unsqueeze(1).expand(
@@ -221,19 +248,18 @@ class ViscoplasticMaterialModel(nn.Module):
             e.shape[0], e.shape[1], m_features2.shape[-1]
         )
         e.requires_grad_(True)
-        stress = torch.autograd.grad(self.energy_function(e, xi, m_features1).sum(), e)[
-            0
-        ]
+        stress = torch.autograd.grad(
+            self.energy_function(e, xi[:, :-1], m_features1).sum(), e
+        )[0]
         return stress, xi
 
     def adjoint_loss(
         self, y_true, xi=None, e=None, E=None, Y=None, n=None, edot_0=None
     ):
         with torch.no_grad():
-            xi_dot = (
-                torch.diff(xi, n=1, dim=1, prepend=torch.zeros_like(xi[:, [0]]))
-                / self.dt
-            )
+            self.xi_dot = torch.diff(xi, n=1, dim=1) / self.dt
+            # self.xi_dot[:, 0] = 2*self.xi_dot[:,1]-self.xi_dot[:,2] + 1e-7  # Handle the first time step separately
+            xi = xi[:, :-1]
 
         m_features1, m_features2 = self.microstructure_encoder(E, Y, n, edot_0)
         m_features1 = m_features1.unsqueeze(1)
@@ -277,23 +303,24 @@ class ViscoplasticMaterialModel(nn.Module):
             )[0]
         )
 
-        objective = lambda u, p, q, lam: torch.mean(f(u, p) + lam * g(u, p, q))
+        objective = lambda u, p, q, l: (f(u, p) + l * g(u, p, q))
 
         e.requires_grad_(True)
-        xi_dot.requires_grad_(True)
+        self.xi_dot.requires_grad_(True)
         xi.requires_grad_(True)
 
-        (Q,) = torch.autograd.grad(f(e, xi).sum(), xi)
-        B, C = torch.autograd.grad(g(e, xi, xi_dot).sum(), [xi, xi_dot])
-        # C.nan_to_num_(nan=e.shape[1])
+        (self.Q,) = torch.autograd.grad(f(e, xi).sum(), xi)
+        self.B, self.C = torch.autograd.grad(
+            g(e, xi, self.xi_dot).sum(), [xi, self.xi_dot]
+        )
+        self.C.nan_to_num_(nan=1, posinf=1e8, neginf=-1e8)
         # C[C == 0] = 1e-4
-        P = B / C
-
-        lam = torch.zeros_like(xi)
-        for n in reversed(range(1, lam.shape[1])):
-            lam[:, n - 1] = (
-                lam[:, n] * (C[:, n] - B[:, n - 1] * self.dt) - Q[:, n] * self.dt
-            ) / C[:, n - 1]
+        self.lam = torch.zeros_like(xi)
+        for n in reversed(range(1, self.lam.shape[1])):
+            self.lam[:, n - 1] = (
+                self.lam[:, n] * (self.C[:, n] - self.B[:, n - 1] * self.dt)
+                - self.Q[:, n] * self.dt
+            ) / (self.C[:, n - 1] + 1e-6)
             # if lam[:, n - 1].isinf().any():
             #     print("Infinity detected in lambda computation at time step", n - 1)
             #     print(xi_dot[:, n - 1])
@@ -305,8 +332,9 @@ class ViscoplasticMaterialModel(nn.Module):
         #     # if lam[:, n - 1].isinf().any():
         #     #     print("Infinity detected in lambda computation at time step", n - 1)
         #     #     print(xi_dot[:, n - 1])
+        self.lam.nan_to_num_(nan=0, posinf=1e8, neginf=-1e8)
 
-        obj = objective(e, xi, xi_dot, lam)
+        obj = objective(e, xi, self.xi_dot, self.lam)
         # print(
         #     lam.isnan().any(),
         #     obj.isnan(),
@@ -316,7 +344,7 @@ class ViscoplasticMaterialModel(nn.Module):
         # return C, lam, f(e, xi), g(e, xi, xi_dot), obj
         # assert not (obj.isnan().any()), "NaN detected in adjoint loss computation."
 
-        return obj
+        return obj.mean()
 
     def compute_energy_derivative(self, u, v, m_features, **kwargs):
         return self.energy_function.compute_derivative(u, v, m_features, **kwargs)
