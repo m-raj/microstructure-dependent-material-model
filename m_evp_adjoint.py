@@ -169,11 +169,11 @@ class ViscoplasticMaterialModel(nn.Module):
         )
 
         self.fnm2 = FNF1d(
-            modes1=modes, width=32, width_final=64, d_in=2, d_out=out_dim, n_layers=3
+            modes1=4, width=32, width_final=64, d_in=2, d_out=out_dim, n_layers=3
         )
 
     def microstructure_encoder(self, E, Y, n, edot_0):
-        microstructure = torch.stack((Y, edot_0), dim=1)
+        microstructure = torch.stack((1 / Y, edot_0), dim=1)
         # features1 = 1 / torch.mean(1 / E, axis=1, keepdim=True)
         features1 = self.fnm1(E.unsqueeze(1))
         features2 = self.fnm2(microstructure)
@@ -335,6 +335,7 @@ class ViscoplasticMaterialModel(nn.Module):
         self.lam.nan_to_num_(nan=0, posinf=1e8, neginf=-1e8)
 
         obj = objective(e, xi, self.xi_dot, self.lam)
+        nan_index = torch.abs(obj).amax(dim=(1, 2)) < 1.0
         # print(
         #     lam.isnan().any(),
         #     obj.isnan(),
@@ -344,7 +345,7 @@ class ViscoplasticMaterialModel(nn.Module):
         # return C, lam, f(e, xi), g(e, xi, xi_dot), obj
         # assert not (obj.isnan().any()), "NaN detected in adjoint loss computation."
 
-        return obj.mean()
+        return obj[nan_index]
 
     def compute_energy_derivative(self, u, v, m_features, **kwargs):
         return self.energy_function.compute_derivative(u, v, m_features, **kwargs)

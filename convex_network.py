@@ -35,7 +35,7 @@ class PartiallyInputConvexLayer(nn.Module):
         self.fc2 = nn.Linear(u_dim, y_dim)
         if z_dim:
             self.fc3 = nn.Linear(u_dim, z_dim)
-            self.A = nn.Parameter(torch.randn(z_dim, out_dim))
+            self.A = nn.Parameter(torch.randn(z_dim, out_dim) + 1.0)
 
         self.B = nn.Parameter(torch.randn(y_dim, out_dim))
         self.activation = ReluSquare()
