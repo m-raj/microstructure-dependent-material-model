@@ -120,7 +120,7 @@ class ViscoplasticMaterialModel(nn.Module):
         )
 
         self.fnm2 = FNF1d(
-            modes1=modes, width=32, width_final=64, d_in=3, d_out=out_dim, n_layers=3
+            modes1=modes, width=32, width_final=64, d_in=2, d_out=out_dim, n_layers=3
         )
 
     def microstructure_encoder(self, E, Y, n, edot_0):
