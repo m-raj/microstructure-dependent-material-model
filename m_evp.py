@@ -20,18 +20,19 @@ class EnergyFunction(nn.Module):
     def __init__(self, y_dim, out_dim, z_dim, u_dim, bias1=False, bias2=False):
         super(EnergyFunction, self).__init__()
 
-        self.picnn1 = PartiallyInputConvex(
-            y_dim=y_dim,
-            x_dim=out_dim,
-            z_dim=z_dim,
-            u_dim=u_dim,
-            bias1=bias1,
-            bias2=bias2,
-        )
+        # self.picnn1 = PartiallyInputConvex(
+        #     y_dim=y_dim,
+        #     x_dim=out_dim,
+        #     z_dim=z_dim,
+        #     u_dim=u_dim,
+        #     bias1=bias1,
+        #     bias2=bias2,
+        # )
 
     def forward(self, u, v, m_features):
-        convex_features = torch.cat((u, v), dim=1)
-        energy = self.picnn1(convex_features, m_features)
+        # convex_features = torch.cat((u, v), dim=1)
+        # energy = self.picnn1(convex_features, m_features)
+        energy = 0.5 * m_features * (u - v) ** 2
         return energy.squeeze(-1)
 
     def compute_derivative(self, u, v, m_features):
@@ -63,15 +64,15 @@ class InverseDissipationPotential(nn.Module):
         # features = torch.cat((q, m_features), dim=1)
         # potential = self.dense_network(features)
 
-        potential = self.picnn1(q, m_features)
+        # potential = self.picnn1(q, m_features)
 
-        # Y, n, edot_0 = torch.split(m_features, 1, dim=1)
-        # Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
-        # potential = torch.mean(
-        #     torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
-        #     dim=1,
-        #     keepdim=True,
-        # )
+        Y, n, edot_0 = torch.split(m_features, 1, dim=1)
+        Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
+        potential = torch.mean(
+            torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
+            dim=1,
+            keepdim=True,
+        )
         return potential.squeeze(-1)
 
     def compute_derivative(self, q, m_features):
@@ -125,7 +126,8 @@ class ViscoplasticMaterialModel(nn.Module):
 
     def microstructure_encoder(self, E, Y, n, edot_0):
         microstructure = torch.stack((Y, edot_0), dim=1)
-        features1 = self.fnm1(E.unsqueeze(1))
+        # features1 = self.fnm1(E.unsqueeze(1))
+        features1 = 1 / torch.mean(1 / E, axis=1, keepdim=True)
         features2 = self.fnm2(microstructure)
         return features1, features2
 
