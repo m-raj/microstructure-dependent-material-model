@@ -139,7 +139,7 @@ class ViscoplasticMaterialModel(nn.Module):
         ]
         # m_features1 = 1 / torch.mean(1 / E, axis=1, keepdim=True)
         m_features1, m_features2 = self.microstructure_encoder(E, Y, n, edot_0)
-        for i in tqdm.trange(0, e.shape[1]):
+        for i in range(0, e.shape[1]):
             s_eq, d = self.compute_energy_derivative(e[:, i], xi[i], m_features1)
             kinetics = self.compute_dissipation_derivative(-d, m_features2)
             stress.append(s_eq)
