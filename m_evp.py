@@ -17,11 +17,16 @@ class CustomActivation(nn.Module):
 
 
 class EnergyFunction(nn.Module):
-    def __init__(self, y_dim, out_dim, z_dim, u_dim):
+    def __init__(self, y_dim, out_dim, z_dim, u_dim, bias1=False, bias2=False):
         super(EnergyFunction, self).__init__()
 
         self.picnn1 = PartiallyInputConvex(
-            y_dim=y_dim, x_dim=out_dim, z_dim=z_dim, u_dim=u_dim
+            y_dim=y_dim,
+            x_dim=out_dim,
+            z_dim=z_dim,
+            u_dim=u_dim,
+            bias1=bias1,
+            bias2=bias2,
         )
 
     def forward(self, u, v, m_features):
@@ -42,10 +47,10 @@ class EnergyFunction(nn.Module):
 
 
 class InverseDissipationPotential(nn.Module):
-    def __init__(self, niv, out_dim, z_dim, u_dim):
+    def __init__(self, niv, out_dim, z_dim, u_dim, bias1=False, bias2=False):
         super(InverseDissipationPotential, self).__init__()
         self.picnn1 = PartiallyInputConvex(
-            y_dim=niv, x_dim=out_dim, z_dim=z_dim, u_dim=u_dim
+            y_dim=niv, x_dim=out_dim, z_dim=z_dim, u_dim=u_dim, bias1=bias1, bias2=bias2
         )
         # self.picnn1 = PartiallyInputConvex(
         #     y_dim=1, x_dim=out_dim, z_dim=z_dim, u_dim=u_dim
@@ -98,10 +103,15 @@ class ViscoplasticMaterialModel(nn.Module):
             self.niv, "Number of internal variables in the viscoplastic material model."
         )
         self.energy_function = EnergyFunction(
-            y_dim=ey_dim + niv, out_dim=eout_dim, z_dim=ez_dim, u_dim=eu_dim
+            y_dim=ey_dim + niv,
+            out_dim=eout_dim,
+            z_dim=ez_dim,
+            u_dim=eu_dim,
+            bias1=False,
+            bias2=True,
         )
         self.dissipation_potential = InverseDissipationPotential(
-            niv=niv, out_dim=out_dim, z_dim=z_dim, u_dim=u_dim
+            niv=niv, out_dim=out_dim, z_dim=z_dim, u_dim=u_dim, bias1=False, bias2=True
         )
         self.dt = dt  # Time step size
 
