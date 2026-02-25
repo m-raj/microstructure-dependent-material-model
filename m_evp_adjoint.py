@@ -345,7 +345,7 @@ class ViscoplasticMaterialModel(nn.Module):
         # return C, lam, f(e, xi), g(e, xi, xi_dot), obj
         # assert not (obj.isnan().any()), "NaN detected in adjoint loss computation."
 
-        return obj[nan_index]
+        return torch.mean(obj[nan_index])
 
     def compute_energy_derivative(self, u, v, m_features, **kwargs):
         return self.energy_function.compute_derivative(u, v, m_features, **kwargs)

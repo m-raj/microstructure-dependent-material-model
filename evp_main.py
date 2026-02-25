@@ -125,7 +125,7 @@ if __name__ == "__main__":
         loss_type=args.loss_type,
         lr=args.lr,
     )
-    wandb_logger.watch(vmm, log='all', log_freq=1)
+#    wandb_logger.watch(vmm, log='all', log_freq=1)
 
     trainer = lp.Trainer(
         max_epochs=epochs,
