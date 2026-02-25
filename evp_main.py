@@ -31,7 +31,13 @@ if __name__ == "__main__":
     with open(f"{args.data_path}", "r") as f:
         content = f.read().strip()
 
-    data_files = [file.strip() for file in content.split("\n")]
+    data_files = (
+        "/resnick/groups/astuart/lianghao/learning_homogenization/data/evp_1d/dataset/2026-02-24_ElastoViscoplastic_PC1D_rateexp"
+        + str(int(args.data_path))
+        + "p0_process"
+    )
+    data_files = [data_files + str(i) + "_data.pkl" for i in range(5)]
+    # data_files = [file.strip() for file in content.split("\n")]
     print(data_files)
 
     datasets = [
@@ -98,10 +104,10 @@ if __name__ == "__main__":
         modes=args.modes,
         z_dim=args.z_dim,
         u_dim=args.u_dim,
-        tol=args.tol,
-        lr=args.step/50000,
-        iter_limit=args.iter_limit,
-        method=args.method
+        #        tol=args.tol,
+        #        lr=args.step/50000,
+        #        iter_limit=args.iter_limit,
+        #        method=args.method
     ).to(device)
 
     epochs = args.epochs
@@ -125,7 +131,7 @@ if __name__ == "__main__":
         loss_type=args.loss_type,
         lr=args.lr,
     )
-#    wandb_logger.watch(vmm, log='all', log_freq=1)
+    #    wandb_logger.watch(vmm, log="all", log_freq=1)
 
     trainer = lp.Trainer(
         max_epochs=epochs,

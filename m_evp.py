@@ -25,8 +25,8 @@ class EnergyFunction(nn.Module):
         )
 
     def forward(self, u, v, m_features):
-        features = torch.cat((v, m_features), dim=1)
-        energy = self.picnn1(u, features)
+        convex_features = torch.cat((u, v), dim=1)
+        energy = self.picnn1(convex_features, m_features)
         return energy.squeeze(-1)
 
     def compute_derivative(self, u, v, m_features):
@@ -98,7 +98,7 @@ class ViscoplasticMaterialModel(nn.Module):
             self.niv, "Number of internal variables in the viscoplastic material model."
         )
         self.energy_function = EnergyFunction(
-            y_dim=ey_dim, out_dim=eout_dim + niv, z_dim=ez_dim, u_dim=eu_dim
+            y_dim=ey_dim + niv, out_dim=eout_dim, z_dim=ez_dim, u_dim=eu_dim
         )
         self.dissipation_potential = InverseDissipationPotential(
             niv=niv, out_dim=out_dim, z_dim=z_dim, u_dim=u_dim
@@ -114,12 +114,9 @@ class ViscoplasticMaterialModel(nn.Module):
         )
 
     def microstructure_encoder(self, E, Y, n, edot_0):
-        microstructure = torch.stack((Y, n, edot_0), dim=1)
+        microstructure = torch.stack((Y, edot_0), dim=1)
         features1 = self.fnm1(E.unsqueeze(1))
-        #     features2 = self.fnm2(microstructure)
         features2 = self.fnm2(microstructure)
-        # features3 = microstructure
-        #     features4 = self.fnm4(microstructur
         return features1, features2
 
     def forward(self, e, E, Y, n, edot_0):

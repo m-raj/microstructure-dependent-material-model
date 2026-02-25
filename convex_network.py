@@ -8,7 +8,7 @@ class CustomActivation(nn.Module):
         super(CustomActivation, self).__init__()
 
     def forward(self, x):
-        return torch.square(torch.nn.functional.softplus(x))
+        return torch.nn.functional.softplus(x)
 
 
 class ConvexLayer(nn.Module):
@@ -53,12 +53,12 @@ class ConvexNN(nn.Module):
         return out.squeeze(-1)
 
 
-class CustomActivation(nn.Module):
-    def __init__(self):
-        super(CustomActivation, self).__init__()
+# class CustomActivation(nn.Module):
+#     def __init__(self):
+#         super(CustomActivation, self).__init__()
 
-    def forward(self, x):
-        return torch.nn.functional.softplus(x)
+#     def forward(self, x):
+#         return torch.nn.functional.softplus(x)
 
 
 class ConvexNetwork(nn.Module):
@@ -89,6 +89,7 @@ class PartiallyInputConvexLayer(nn.Module):
 
         self.B = nn.Parameter(torch.randn(y_dim, out_dim))
         self.activation = CustomActivation()
+        self.weight_activation = torch.nn.Softplus()
 
     def forward(self, y, u, z=None):
         """
@@ -97,8 +98,10 @@ class PartiallyInputConvexLayer(nn.Module):
         l1 = self.fc1(u) if self.bias2 else 0
         l2 = self.fc2(u)
         if z is not None:
-            l3 = F.softplus(self.fc3(u))
-            t1 = torch.einsum("...j,...j,ji->...i", z, l3, F.softplus(self.A))
+            l3 = self.activation(self.fc3(u))
+            t1 = torch.einsum(
+                "...j,...j,ji->...i", z, l3, self.weight_activation(self.A)
+            )
         t2 = torch.einsum("...j,...j,ji->...i", y, l2, self.B)
 
         output = t1 + t2 + l1 if z is not None else t2 + l1
