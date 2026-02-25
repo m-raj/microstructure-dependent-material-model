@@ -29,10 +29,14 @@ class EnergyFunction(nn.Module):
         #     bias2=bias2,
         # )
 
+        self.picnn = PartiallyInputConvex(
+            y_dim=2, x_dim=1, z_dim=50, u_dim=50, bias1=True, bias2=True
+        )
+
     def forward(self, u, v, m_features):
-        # convex_features = torch.cat((u, v), dim=1)
-        # energy = self.picnn1(convex_features, m_features)
-        energy = 0.5 * m_features * (u - v) ** 2
+        convex_features = torch.cat((u, v), dim=1)
+        energy = self.picnn1(convex_features, m_features)
+        # energy = 0.5 * m_features * (u - v) ** 2
         return energy.squeeze(-1)
 
     def compute_derivative(self, u, v, m_features):
@@ -117,7 +121,7 @@ class ViscoplasticMaterialModel(nn.Module):
         self.dt = dt  # Time step size
 
         self.fnm1 = FNF1d(
-            modes1=modes, width=32, width_final=64, d_in=1, d_out=eout_dim, n_layers=3
+            modes1=4, width=32, width_final=64, d_in=1, d_out=eout_dim, n_layers=3
         )
 
         self.fnm2 = FNF1d(
@@ -126,8 +130,8 @@ class ViscoplasticMaterialModel(nn.Module):
 
     def microstructure_encoder(self, E, Y, n, edot_0):
         microstructure = torch.stack((Y, edot_0), dim=1)
-        # features1 = self.fnm1(E.unsqueeze(1))
-        features1 = 1 / torch.mean(1 / E, axis=1, keepdim=True)
+        features1 = self.fnm1(E.unsqueze(-1))
+        # features1 = 1 / torch.mean(1 / E, axis=1, keepdim=True)
         features2 = self.fnm2(microstructure)
         return features1, features2
 
