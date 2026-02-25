@@ -20,23 +20,18 @@ class EnergyFunction(nn.Module):
     def __init__(self, y_dim, out_dim, z_dim, u_dim, bias1=False, bias2=False):
         super(EnergyFunction, self).__init__()
 
-        # self.picnn1 = PartiallyInputConvex(
-        #     y_dim=y_dim,
-        #     x_dim=out_dim,
-        #     z_dim=z_dim,
-        #     u_dim=u_dim,
-        #     bias1=bias1,
-        #     bias2=bias2,
-        # )
-
-        self.picnn = PartiallyInputConvex(
-            y_dim=2, x_dim=1, z_dim=50, u_dim=50, bias1=True, bias2=True
+        self.picnn1 = PartiallyInputConvex(
+            y_dim=y_dim,
+            x_dim=out_dim,
+            z_dim=z_dim,
+            u_dim=u_dim,
+            bias1=bias1,
+            bias2=bias2,
         )
 
     def forward(self, u, v, m_features):
         convex_features = torch.cat((u, v), dim=1)
         energy = self.picnn1(convex_features, m_features)
-        # energy = 0.5 * m_features * (u - v) ** 2
         return energy.squeeze(-1)
 
     def compute_derivative(self, u, v, m_features):
@@ -68,15 +63,15 @@ class InverseDissipationPotential(nn.Module):
         # features = torch.cat((q, m_features), dim=1)
         # potential = self.dense_network(features)
 
-        # potential = self.picnn1(q, m_features)
+        potential = self.picnn1(q, m_features)
 
-        Y, n, edot_0 = torch.split(m_features, 1, dim=1)
-        Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
-        potential = torch.mean(
-            torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
-            dim=1,
-            keepdim=True,
-        )
+        # Y, n, edot_0 = torch.split(m_features, 1, dim=1)
+        # Y, n, edot_0 = Y.squeeze(), n.squeeze(), edot_0.squeeze()
+        # potential = torch.mean(
+        #     torch.pow(torch.abs(q), n + 1) / (n + 1) * edot_0 * torch.pow(Y, -n),
+        #     dim=1,
+        #     keepdim=True,
+        # )
         return potential.squeeze(-1)
 
     def compute_derivative(self, q, m_features):
@@ -121,7 +116,7 @@ class ViscoplasticMaterialModel(nn.Module):
         self.dt = dt  # Time step size
 
         self.fnm1 = FNF1d(
-            modes1=4, width=32, width_final=64, d_in=1, d_out=eout_dim, n_layers=3
+            modes1=modes, width=32, width_final=64, d_in=1, d_out=eout_dim, n_layers=3
         )
 
         self.fnm2 = FNF1d(
@@ -130,8 +125,7 @@ class ViscoplasticMaterialModel(nn.Module):
 
     def microstructure_encoder(self, E, Y, n, edot_0):
         microstructure = torch.stack((Y, edot_0), dim=1)
-        features1 = self.fnm1(E.unsqueze(-1))
-        # features1 = 1 / torch.mean(1 / E, axis=1, keepdim=True)
+        features1 = self.fnm1(E.unsqueeze(1))
         features2 = self.fnm2(microstructure)
         return features1, features2
 
@@ -145,7 +139,7 @@ class ViscoplasticMaterialModel(nn.Module):
         ]
         # m_features1 = 1 / torch.mean(1 / E, axis=1, keepdim=True)
         m_features1, m_features2 = self.microstructure_encoder(E, Y, n, edot_0)
-        for i in range(0, e.shape[1]):
+        for i in tqdm.trange(0, e.shape[1]):
             s_eq, d = self.compute_energy_derivative(e[:, i], xi[i], m_features1)
             kinetics = self.compute_dissipation_derivative(-d, m_features2)
             stress.append(s_eq)

@@ -6,11 +6,11 @@
 # Number of GPUs 
 # SBATCH --constraint="cascadelake"
 #SBATCH --partition gpu
-#SBATCH --gres gpu:v100:1
+#SBATCH --gres gpu:p100:1
 
 # Wall time: maxctivate base
 # Maximum allowed run time
-#SBATCH --time=8:30:00
+#SBATCH --time=10:00:00
 # SBATCH --qos debug
 
 # Send email to user
@@ -24,19 +24,19 @@ args=(
 	--run_id $1
 	--mode online 
 	--device cuda 
-	--data_path 1
+	--data_path 5
 	--material_model m_evp 
 	--hidden_dim 150
 	--epochs 2000
 	--lr 0.002 
 	--batch_size 400 
 	--niv 1
-	--step 10
-	--final_step 5000
+	--step 20
+	--final_step 2500
 	--modes 3
 	--out_dim 2
-	--u_dim 30
-	--z_dim 30
+	--u_dim 20
+	--z_dim 20
 	--loss_type mse
 #	--tol 1e-6
 #	--solver_lr 0.004
