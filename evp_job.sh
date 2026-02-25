@@ -31,12 +31,12 @@ args=(
 	--lr 0.002 
 	--batch_size 400 
 	--niv 1
-	--step 20
-	--final_step 2500
+	--step 10
+	--final_step 5000
 	--modes 3
 	--out_dim 2
-	--u_dim 20
-	--z_dim 20
+	--u_dim 30
+	--z_dim 30
 	--loss_type mse
 #	--tol 1e-6
 #	--solver_lr 0.004
