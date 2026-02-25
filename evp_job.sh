@@ -24,7 +24,7 @@ args=(
 	--run_id $1
 	--mode online 
 	--device cuda 
-	--data_path evp_data.txt
+	--data_path 1
 	--material_model m_evp 
 	--hidden_dim 150
 	--epochs 2000

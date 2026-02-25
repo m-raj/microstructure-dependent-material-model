@@ -20,7 +20,7 @@ if __name__ == "__main__":
         # Set the wandb entity where your project will be logged (generally your team name).
         entity="sci-ai",
         # Set the wandb project where this run will be logged.
-        project="EVP",
+        project="EVP_systematic",
         # Track hyperparameters and run metadata.
         config=args.__dict__,
         # Name of the run
@@ -28,8 +28,8 @@ if __name__ == "__main__":
         mode=args.mode,
     )
 
-    with open(f"{args.data_path}", "r") as f:
-        content = f.read().strip()
+#    with open(f"{args.data_path}", "r") as f:
+#        content = f.read().strip()
 
     data_files = (
         "/resnick/groups/astuart/lianghao/learning_homogenization/data/evp_1d/dataset/2026-02-24_ElastoViscoplastic_PC1D_rateexp"
