@@ -25,7 +25,7 @@ args=(
 	--mode online 
 	--device cuda 
 	--data_path evp_data.txt
-	--material_model m_evp_adjoint 
+	--material_model m_evp 
 	--hidden_dim 150
 	--epochs 2000
 	--lr 0.002 
@@ -35,13 +35,13 @@ args=(
 	--final_step 2500
 	--modes 3
 	--out_dim 2
-	--u_dim 50
-	--z_dim 200
-	--loss_type adjoint
-	--tol 1e-6
-	--solver_lr 0.004
-	--iter_limit 10000
-	--num_workers 0
+	--u_dim 20
+	--z_dim 20
+	--loss_type mse
+#	--tol 1e-6
+#	--solver_lr 0.004
+#	--iter_limit 10000
+#	--num_workers 0
 )
 
 srun python evp_main.py "${args[@]}"
