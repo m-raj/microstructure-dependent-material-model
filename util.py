@@ -96,11 +96,11 @@ class ViscoplasticDataset(Dataset):
 
     def __getitem__(self, idx):
         x = (
-            self.e[idx].to(self.device),
+            self.e[idx].to(self.device) / 0.1802,
             self.E[idx].to(self.device),
             self.Y[idx].to(self.device),
             self.n[idx].to(self.device),
             self.edot_0[idx].to(self.device),
         )
-        y = self.s[idx].to(self.device)
+        y = self.s[idx].to(self.device) / 0.0048
         return x, y

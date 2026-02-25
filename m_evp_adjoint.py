@@ -13,7 +13,7 @@ class CustomActivation(nn.Module):
         super(CustomActivation, self).__init__()
 
     def forward(self, x):
-        return torch.square(F.relu(x))
+        return F.softplus(x)
 
 
 class EnergyFunction(nn.Module):
